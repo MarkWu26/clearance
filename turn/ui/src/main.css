@@ -1,0 +1,209 @@
+html {
+  font-size: 1rem;
+  font-family: "Poppins", sans-serif;
+}
+
+:root {
+  --blue-hover: rgba(20, 52, 164, 0.1);
+  --blue-highlight: #191d88;
+  --blue-active: #0f52ba;
+  --gray-color: #b1b1b1;
+  --gray-color-2: #e2e2e2;
+  --green-success: #32cd32;
+  --red-failed: #d2042d;
+  --or-edit: #f28c28;
+}
+
+@include media-breakpoint-up(sm) {
+  html {
+    font-size: 1.2rem;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  html {
+    font-size: 1.4rem;
+  }
+}
+
+@include media-breakpoint-up(lg) {
+  html {
+    font-size: 1.6rem;
+  }
+}
+
+@font-face {
+  font-family: "PoppinsBold";
+  src:
+    local("PoppinsBold"),
+    url("./assets/fonts/Poppins/Poppins-Bold.ttf") format("truetype");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "Poppins";
+  src:
+    local("Poppins"),
+    url("./assets/fonts/Poppins/Poppins-Regular.ttf") format("truetype");
+  font-weight: bold;
+}
+
+.poppins {
+  font-family: "PoppinsBold", sans-serif;
+}
+.poppins-reg {
+  font-family: "Poppins", sans-serif;
+}
+
+.main {
+  height: 100vh;
+}
+
+.main-container {
+  background-color: #f7f7f9;
+}
+.sidebar {
+  width: 16rem;
+  height: 100%;
+  background-color: #fff;
+}
+
+.sidebar-logo {
+  width: 3rem;
+  height: auto;
+}
+.sidebar-logo-min {
+  width: 2.5rem;
+  height: auto;
+}
+.header {
+  height: fit-content;
+  background-color: #fff;
+}
+
+.sidebar-min {
+  width: fit-content;
+  padding: 0.3rem;
+  height: 100%;
+  background-color: #fff;
+}
+.menu-button {
+  width: 3rem;
+  color: white;
+  background-color: #fff;
+  text-decoration: none;
+}
+
+.btn-hover:hover {
+  background-color: var(--blue-hover);
+}
+.btn-hover:hover > i {
+  color: var(--blue-highlight);
+}
+
+.menu-nav {
+  width: 11rem;
+}
+
+.search-input {
+  width: 5rem;
+  color: red;
+}
+
+.menu-icon {
+  font-size: 1.2rem;
+  color: blue;
+}
+
+.card-main {
+  height: 88%;
+}
+.card-fixed {
+  width: 60vh !important;
+}
+
+.nav-hover:hover {
+  background-color: var(--blue-hover);
+}
+
+.nav-hover:hover .nav-link {
+  color: var(--blue-highlight);
+  font-weight: bold;
+}
+
+.nav-link:active {
+  opacity: 1;
+  color: #ccc !important;
+  font-weight: bold;
+}
+.nav-hover > a {
+  color: black;
+  text-decoration: none;
+}
+
+.nav-icons {
+  font-size: vh;
+}
+
+.nav-active {
+  background-color: var(--blue-active) !important;
+}
+.nav-active .nav-link {
+  color: #fff !important;
+  font-weight: 600;
+}
+.upload-logo {
+  width: 5rem;
+  height: auto;
+}
+
+.dashed-border {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%2333333324' stroke-width='4' stroke-dasharray='6%2c 14' stroke-dashoffset='5' stroke-linecap='square'/%3e%3c/svg%3e");
+  background-size: contain;
+}
+
+.upload-label {
+  color: var(--gray-color);
+}
+
+.add-btn {
+  color: #fff !important;
+  background-color: var(--blue-highlight);
+  padding: 0.3rem;
+}
+
+.frm-label {
+  font-family: "Poppins", "sans-serif";
+  font-weight: 600;
+}
+
+.h-10 {
+  height: 5rem !important;
+  width: fit-content;
+}
+
+.success-border {
+  border-top-color: var(--green-success) !important;
+}
+
+.failed-border {
+  border-top-color: var(--red-failed) !important;
+}
+
+.custom-alert {
+  animation: fadeOut 1s ease-in-out forwards !important;
+}
+
+.progress-bar-container {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 20px;
+  background-color: blue;
+  border-radius: 4px;
+  color: white;
+  text-align: center; /* Center the text inside the bar */
+}

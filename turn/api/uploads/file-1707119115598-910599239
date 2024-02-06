@@ -1,0 +1,48 @@
+
+      </li><!-- End Activity Nav -->
+
+      <li class="nav-item dropdown">
+
+        <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+          <i class="bi bi-bell"></i>
+          <span class="badge bg-success badge-number" id="pr-activity-total-notifs"></span>
+        </a><!-- End Activity Icon -->
+        <?php
+        $results = $db->get_results("SELECT message, date_created, pr_code, is_read, is_approved FROM purchase_request_notification WHERE requestee = '$curr_user_fullname' ORDER BY date_created DESC ");
+        ?>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications" id="pr-activity-notifs">
+        <li class="dropdown-header px-5">
+             <?php echo "You have ". count($results) . " new notifications" ?>
+            
+        </li>
+        <li>
+            <hr class="dropdown-divider">
+          </li>
+
+          <?php
+          foreach ($results as $result) {
+            echo "<li class='notification-item'>";
+            if ($result->is_approved == 1) {
+              echo "<i class='bi bi-check-circle text-success'></i>";
+            } else{
+            echo "<i class='bi bi-x-circle text-danger'></i>";
+            }
+            echo "<div>";
+            echo "<h4>" . $result->pr_code . "</h4>" . "<p>" . $result->message . "</p>";
+       
+            echo "<p>". $result->date_created . "</p>";
+    
+            echo "</div>";
+            echo "</li>";
+            echo "<hr class='dropdown-divider'>";
+          }
+          ?>
+
+
+        </ul><!-- End Activity Dropdown Items -->
+
+      </li><!-- End Activity Nav -->
+      <!-- 
+
+   
+ -->
