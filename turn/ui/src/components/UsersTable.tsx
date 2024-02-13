@@ -35,11 +35,6 @@ const UsersTable: React.FC<Props> = ({ data, col }) => {
     setRows(data);
   }, [data]);
 
-  useEffect(() => {
-    
-  }, [rows]);
-
-
 
   return (
     <>

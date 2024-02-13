@@ -26,12 +26,12 @@ const ManageUsers = () => {
 
     {
       name: "Type",
-      selector: (row: User) => row.type
+      selector: (row: User) => row.type_name
     },
 
     {
       name: "Unit",
-      selector: (row: User) => row.unit
+      selector: (row: User & {unit_abbrev: string}) => row.unit_abbrev
     },
 
     {
@@ -49,7 +49,7 @@ const ManageUsers = () => {
             className="btn"
             title="Edit"
             onClick={(e) => {
-              console.log(row)
+              console.log('roww: ', row)
               handleEdit({
                 id: row.id,
                 username: row.username,
@@ -57,6 +57,9 @@ const ManageUsers = () => {
                 rights: row.rights,
                 type: row.type,
                 unit: row.unit,
+                unit_id: row.unit_id,
+                type_name: row.type_name,
+                type_id: row.type_id
               })}
             }
             style={{
@@ -122,6 +125,7 @@ const ManageUsers = () => {
           // Handling API response error
           setErrors(res.message);
         } else {
+          console.log('response: ', res.users)
           setUsers(res.users);
         }
       } catch (err) {

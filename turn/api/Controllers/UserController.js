@@ -5,6 +5,8 @@ const { validationResult } = require('express-validator');
 const registerUser = async (req, res) => {
     const { username, password, rights, type, unit } = req.body;
 
+    console.log('type: ', type, 'unit: ', unit)
+
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -34,6 +36,8 @@ const registerUser = async (req, res) => {
         // Insert the new user into the database without specifying 'id'
         const result = await db.execute('INSERT INTO users (username, password, rights, type, unit) VALUES (?, ?, ?, ?, ?)', [username, hashedPass, rights, type, unit]);
 
+        console.log('result: ', result)
+
         res.json({
             success: true,
             insertedId: result.insertId,
@@ -57,7 +61,7 @@ const getUsers = (req, res) => {
         });
     }
 
-    db.execute('SELECT * from users WHERE id = ?', [userId], (err, data) => {
+    db.execute('SELECT * from users left join units ON users.unit = units.id WHERE id = ?', [userId], (err, data) => {
         if (err) {
             console.log(err)
             return res.json({success: false, error: "Database error"});
@@ -69,6 +73,8 @@ const getUsers = (req, res) => {
             });
         }
 
+      
+
         res.json({
             success: true,
             user: data[0]
@@ -78,7 +84,10 @@ const getUsers = (req, res) => {
 
 const getAllUsers = (req, res) => {
     // Execute a query to select all users
-    db.execute('SELECT * FROM users', (err, data) => {
+    db.execute(`SELECT user.id, user.username, user.password, user.type, user.rights, unit.abbrev as unit_abbrev, unit.id as unit_id, unit.description, type.name as type_name, type.id as type_id
+    from users AS user 
+    LEFT JOIN units AS unit ON user.unit = unit.id 
+    LEFT JOIN user_types as type ON user.type = type.id`, (err, data) => {
         if (err) {
             console.log("Database error", err);
             return res.json({ success: false, error: "Database error" });
@@ -88,6 +97,8 @@ const getAllUsers = (req, res) => {
         if (data.length === 0) {
             return res.status(404).json({ error: 'No users found' });
         }
+
+        console.log('users: ', data)
 
         res.json({
             success: true,
@@ -101,6 +112,7 @@ const updateUser = async (req, res) => {
    /*  const userId = req.params.id; */
    console.log('HIIIIIIII');
     const { userId , username, password, rights, type, unit } = req.body;
+    console.log('TEST DATA: ', userId, username, password, rights, type, unit)
     console.log('the user id is: ', userId)
     // Check for validation errors
     const errors = validationResult(req);
@@ -181,10 +193,33 @@ const deleteUser = (req, res) => {
 };
 
 
+const getUserTypes = (req, res) => {
+  // Execute a query to select all users
+  db.execute('SELECT * FROM user_types', (err, data) => {
+    if (err) {
+        console.log("Database error", err);
+        return res.json({ success: false, error: "Database error" });
+    }
+    
+    
+    if (data.length === 0) {
+        return res.status(404).json({ error: 'No users found' });
+    }
+
+    console.log('types : ', data)
+
+    res.json({
+        success: true,
+        userTypes: data
+    });
+});
+}
+
 module.exports = {
     registerUser,
     getUsers,
     updateUser,
     deleteUser,
-    getAllUsers
+    getAllUsers,
+    getUserTypes
 };

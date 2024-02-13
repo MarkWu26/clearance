@@ -49,6 +49,7 @@ return res.status(400).send(`File type not supported for mime types: ${invalidMi
 // Route for uploading files
 router.post('/upload', upload.array('file', 5), validateMimeTypes, async (req, res) => {
   try {
+    console.log('request: ', req);
     for (let file of req.files) {
       await UploadFileController.processFile(file);
     }

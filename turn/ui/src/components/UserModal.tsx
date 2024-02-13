@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 
-import { User, Unit } from "./Types";
+import { User, Unit, UserType } from "./Types";
 import userService from "../services/user.service";
 import unitService from "../services/unit.service";
 
@@ -29,13 +29,17 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     msg?: string;
   };
 
+  console.log('selected user: ', selectedUser)
   const [list, setList] = useState([]);
   const [unitList, setUnitList] = useState<Unit[]>();
+  const [typeList, setTypeList] = useState<UserType[]>()
   const [userName, setUserName] = useState(selectedUser?.username ?? "");
   const [userPass, setUsersPass] = useState(selectedUser?.password ?? "");
-  const [usersType, setUsersType] = useState(selectedUser?.type ?? "");
-  const [usersUnit, setUsersUnit] = useState(selectedUser?.unit ?? "");
+  const [usersType, setUsersType] = useState(selectedUser?.type_id.toString() ?? "");
+  const [usersUnit, setUsersUnit] = useState(selectedUser?.unit_id.toString() ?? "");
   const [usersRight, setUsersRight] = useState(selectedUser?.rights ?? "");
+
+  console.log('selected user unit: ', selectedUser?.unit_id)
  
 
   useEffect(() => {
@@ -43,10 +47,12 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     try {
       const usersData = await userService.getAllUsers();
       setList(usersData);
-      console.log(list);
 
       const unitsData = await unitService.getUnits();
       setUnitList(unitsData);
+
+      const userTypeData = await userService.getUserTypes();
+      setTypeList(userTypeData.userTypes)
     } catch (error) {
       if (error instanceof Error) {
         setAlert("Error fetching units: " + error.message, false);
@@ -59,8 +65,6 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
   }, [setAlert]);
 
 
-  console.log('unit list: ', unitList)
-
   type UserFormData = z.infer<typeof schema>;
 
   const {
@@ -68,7 +72,13 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<UserFormData>({ resolver: zodResolver(schema) });
+    watch
+  } = useForm<UserFormData>({ resolver: zodResolver(schema), defaultValues: {
+    username: userName,
+    type: usersType,
+    unit: usersUnit
+  } });
+
 
   const [customErrors, setCustomErrors] = useState<Err[]>();
 
@@ -83,8 +93,8 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
           selectedUser.id,
           data.username,
           data.password,
-          data.type,
           data.unit,
+          data.type,
           data.rights
         ).then(
           (res) => {
@@ -104,7 +114,8 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
         
       } else {
         // Create user
-        await userService.registerUser(data.username, data.password, data.type, data.unit, data.rights).then(
+        console.log('data type: ', data.type)
+        await userService.registerUser(data.username, data.password, data.unit, data.type, data.rights).then(
           (res) => {
             if (res.success === true) {
               setAlert("User created", true);
@@ -127,6 +138,8 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     }
   });
   
+  const watchunit = watch('unit')
+  console.log('watch unit: ', watchunit)
 
 
   return (
@@ -196,29 +209,11 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
                   Choose Type
                 </option>
               )}
-              
-
-              <option value="Admin" id="type_1">
-                      Admin
-                    </option>
-                    <option value="Unit" id="type_2">
-                      Unit
-                    </option>
-                    <option value="Office" id="type_3">
-                      Office
-                    </option>
-                    <option value="Fin" id="type_4">
-                      Finance
-                    </option>.
-                    <option value="Lib" id="type_5">
-                      Library
-                    </option>
-                    <option value="Dean" id="type_6">
-                      Dean
-                    </option>
-                    <option value="D" id="type_7">
-                      Department
-                    </option>
+                {typeList?.map((type)=> (
+                  <option key={type.id} value={type.id.toString()}>
+                    {type.name}
+                  </option>
+                ))}
             </select>
 
             {errors.type && (
@@ -247,7 +242,7 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
               <option value="0">ALL</option>
               {unitList?.map((unit) => (
                 
-                  <option value={unit.id} key={unit.id}>
+                  <option value={unit.id.toString()} key={unit.id}>
                     {unit.name + ` (${unit.desc})`}
                   </option>
                 

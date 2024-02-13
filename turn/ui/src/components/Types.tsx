@@ -27,7 +27,16 @@ export type Unit = {
     unit: string;
     type: string;
     rights: string;
+    unit_id: string | number;
+    type_name: string;
+    type_id: string;
   };
+
+  export type UserType = {
+    id: string;
+    name: string;
+    desc: string;
+  }
 
   export type Config = {
     id?: string,

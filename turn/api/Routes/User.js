@@ -9,6 +9,7 @@ router.put('/user/edit/', userController.updateUser);
 router.delete('/user/delete/:id', userController.deleteUser);
 router.get('/user/:id', userController.getUsers);  
 router.get('/getall', userController.getAllUsers); 
+router.get('/getUserTypes', userController.getUserTypes); 
 router.get('/test', (req, res) => {
     res.json({ msg: "Hello!!" });
 });

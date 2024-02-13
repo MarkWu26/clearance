@@ -33,7 +33,7 @@ const authenticate = async (req, res) => {
                 
             } 
 
-           /*  if(!user){
+             if(!user){
                 return res.status(401).json(
                     {
                         errors: [{
@@ -42,7 +42,7 @@ const authenticate = async (req, res) => {
                     }
                     );
             }
-            
+            /*
             let match = await bcrypt.compare(password, user.password);
  */
            /*  if(!match){

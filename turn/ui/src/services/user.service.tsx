@@ -36,7 +36,7 @@ const updateUser = (
   rights: string,
 ) => {
   console.log('the user id is: ', userId)
-  return axios.put(API_URL + "/user/edit/", { userId, username, password, type, unit, rights } ).then((res) => {
+  return axios.put(API_URL + "/user/edit/", { userId, username, password, unit, type, rights } ).then((res) => {
     return res.data;
   }).catch((err: AxiosError) => {
       return err;
@@ -60,6 +60,15 @@ const getAllUsers = () => {
   });
 };
 
+const getUserTypes = () => {
+  return axios.get(API_URL + "/getUserTypes").then((res) => {
+    return res.data;
+  }).catch((err) => {
+    console.error("Error fetching users:", err.message)
+    return {err: "An error occured while fetching users"};
+  });
+}
+
 
 
 const userService = {
@@ -68,6 +77,7 @@ const userService = {
   getAllUsers,
   deleteUser,
   updateUser,
+  getUserTypes
 };
 
 export default userService;
