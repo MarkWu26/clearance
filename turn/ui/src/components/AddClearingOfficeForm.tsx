@@ -17,6 +17,7 @@ interface addClearingOfficeProps {
     setClose: () => void;
     setAlert: (message: string, success: boolean) => void;
     unitId?: string
+    selectedForm?: ClearanceFrm | null;
 }
 
 type Err = {
