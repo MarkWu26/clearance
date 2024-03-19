@@ -9,6 +9,8 @@ import unitService from "../services/unit.service";
 import { z } from "zod";
 import formService from "../services/form.service";
 import { useForm } from "react-hook-form";
+import groupService from "../services/groups.service";
+import { clearanceGroups } from "./Types";
 
 interface addClearingOfficeProps {
     show: boolean;
@@ -16,6 +18,10 @@ interface addClearingOfficeProps {
     setAlert: (message: string, success: boolean) => void;
     unitId?: string
 }
+
+type Err = {
+  msg?: string;
+};
 
 
 const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
@@ -27,6 +33,7 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
 
     const [list, setList] = useState<string[]>([]);
     const [unitList, setUnitList] = useState<Unit[] | undefined>([]);
+    const [groups, setGroups] = useState<clearanceGroups [] | undefined>([])
     const [customErrors, setCustomErrors] = useState<Err[]>();
     console.log('unit: ', unitId)
    
@@ -67,9 +74,10 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
           try {
             const offices = await OfficeService.getAvailableOffices();
             const units = await unitService.getUnits();
-  
+            const groups = await groupService.getGroups();
             setList(offices);
             setUnitList(units);
+            setGroups(groups)
           } catch (error) {
             console.error("Error fetching data:", error);
           }
@@ -166,6 +174,39 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
                   {errors.officeAbbrev.message}
                 </p>
               )}
+
+
+              <label className="form-label frm-label">Group</label>
+                <select
+                  {...register("group")}
+                  className="form-select mb-2 poppins-reg "
+                  id="group"
+                  onChange={(e) => {
+                    console.log('target value: ', e.target.value)
+                  /*   setGroupChosen(e.target.value) */
+                    setCustomErrors([]);
+                  }}
+                  
+                  /* value={ groupChosen } */
+                >
+                 
+                    <option value="" disabled>
+                      Choose Group
+                    </option>
+            
+
+                  {groups?.map((group)=> {
+                    return (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    )
+                  })}
+  
+                </select>
+                {errors.group && (
+                  <p key="group_err" className="text-danger">
+                    {errors.group.message}
+                  </p>
+                )}
 
 
         
