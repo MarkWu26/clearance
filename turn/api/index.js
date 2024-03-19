@@ -85,6 +85,7 @@ const unitRoutes = require('./Routes/Unit');
 const uploadRoutes = require('./Routes/UploadFile');
 const formsRoutes = require('./Routes/Forms');
 const officeRoutes = require('./Routes/Office');
+const groupRoutes = require('./Routes/Groups')
 
 //CONTROLLERS
 //const loginController = require('./Controllers/AuthController');
@@ -117,6 +118,7 @@ app.use(
   app.use('/upload-and-parse', uploadRoutes);
   app.use('/clearance', clearanceRoutes);
   app.use('/clearance-period', periodRoutes);
+  app.use('/groups', groupRoutes)
   app.get('/', (req, res) => {
     res.json({message: 'Hello World!'});
   });

@@ -12,6 +12,8 @@ import AdminLayout from "./components/AdminLayout.tsx";
 import authService from "./services/auth.service.tsx";
 import NotFound from "./components/NotFound.tsx";
 import UploadFile from "./components/UploadFile.tsx";
+import AddClearance from "./components/AddClearance.tsx";
+import EditClearance from "./components/EditClearance.tsx";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuth);
@@ -120,6 +122,17 @@ function App() {
             element={
               isAuthenticated ? (
                 <UploadFile />
+              ) : (
+                <Navigate to={"/login"} replace />
+              )
+            }
+          />
+
+           <Route
+            path="/editClearance/:id"
+            element={
+              isAuthenticated ? (
+                <EditClearance />
               ) : (
                 <Navigate to={"/login"} replace />
               )

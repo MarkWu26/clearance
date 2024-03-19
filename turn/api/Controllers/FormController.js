@@ -22,7 +22,7 @@ const createForm = (req, res) => {
     const sanitizedGroup = group || '';
 
     db.execute(
-        'INSERT INTO clearance_frm (unit, officeName, office_id, officeAbbrev, `group`) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO clearance_frm (unit, officeName, office_id, officeAbbrev, `clearance_group_id`) VALUES (?, ?, ?, ?, ?)',
         [String(sanitizedUnit), sanitizedOfficeName, sanitizedOfficeId, sanitizedOfficeAbbrev, sanitizedGroup],
         (err, data) => {
             if (err) {
@@ -37,28 +37,83 @@ const createForm = (req, res) => {
     );
 };
 
-const getForms = (req, res) => {
+const getAllForms = (req, res) => {
+try {
+    let forms = []
+    db.execute('SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id', (err, data) => {
+        if (err) {
+            console.error('Get Forms Error:', err);
+            return res.status(500).json({ success: false, error: 'Failed to get forms' });
+        }
+
+        for (let i = 0; i < data.length; i++) {
+            forms.push({
+                id: data[i].id,
+                unit: data[i].unit,
+                officeName: helper.decodeHtml(data[i].officeName),
+                officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
+                group: helper.decodeHtml(data[i].groupName),
+            });
+        }
+
+        return res.status(200).json(forms);
+    });
+} catch (error) {
+    console.error('Get Forms Error:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+}
+}
+
+const getForms = async (req, res) => {
     try {
+        
+        console.log('query: ', req.params.id)
+        const formId = req.params.id
         let forms = [];
 
-        db.execute('SELECT * FROM clearance_frm', (err, data) => {
-            if (err) {
-                console.error('Get Forms Error:', err);
-                return res.status(500).json({ success: false, error: 'Failed to get forms' });
-            }
+        if(formId){
+            db.execute(`SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit, form.unit AS form_unitId FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id WHERE form.id = ${formId}`, (err, data) => {
+                if (err) {
+                    console.error('Get Forms Error:', err);
+                    return res.status(500).json({ success: false, error: 'Failed to get forms' });
+                }
+    
+                for (let i = 0; i < data.length; i++) {
+                    forms.push({
+                        id: data[i].id,
+                        unit: data[i].unit,
+                        officeName: helper.decodeHtml(data[i].officeName),
+                        officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
+                        group: helper.decodeHtml(data[i].groupName),
+                        unitId: data[i].form_unitId
+                    });
+                }
+    
+                return res.status(200).json(forms);
+            });
+        } 
+        else {
+            db.execute('SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id', (err, data) => {
+                if (err) {
+                    console.error('Get Forms Error:', err);
+                    return res.status(500).json({ success: false, error: 'Failed to get forms' });
+                }
+    
+                for (let i = 0; i < data.length; i++) {
+                    forms.push({
+                        id: data[i].id,
+                        unit: data[i].unit,
+                        officeName: helper.decodeHtml(data[i].officeName),
+                        officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
+                        group: helper.decodeHtml(data[i].groupName),
+                    });
+                }
+    
+                return res.status(200).json(forms);
+            });
+        }
 
-            for (let i = 0; i < data.length; i++) {
-                forms.push({
-                    id: data[i].id,
-                    unit: data[i].unit,
-                    officeName: helper.decodeHtml(data[i].officeName),
-                    officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
-                    group: helper.decodeHtml(data[i].group),
-                });
-            }
-
-            return res.status(200).json(forms);
-        });
+      
     } catch (error) {
         console.error('Get Forms Error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
@@ -135,4 +190,5 @@ module.exports = {
     getForms,
     deleteForm,
     updateForm,
+    getAllForms
 };

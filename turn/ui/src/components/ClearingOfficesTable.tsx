@@ -1,27 +1,33 @@
-import { Unit } from "./Types";
+import {Office} from "./Types";
 
 interface Props {
-  data: Unit[] | [object];
+  data: Office[] | [object];
   col: object[];
+  
 }
 import { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-const UnitsTable = ({ data, col }: Props) => {
+const ClearingOfficesTable = ({ data, col }: Props) => {
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchKey = e.target.value.toLowerCase();
-    const newData = (data as Unit[]).filter((row) => {
+    const newData = (data as Office[]).filter((row) => {
       return (
         row.name.toLowerCase().includes(searchKey) ||
-        row.desc.toLowerCase().includes(searchKey)
+        row.abbrev.toLowerCase().includes(searchKey) || 
+        row.unit.toLowerCase().includes(searchKey) || 
+        row.type.toLowerCase().includes(searchKey)
       );
     });
     setRows(newData);
   };
 
+  
+
   useEffect(() => {
     setRows(data);
   }, [data]);
-
+ 
   const [rows, setRows] = useState(data);
   return (
     <>
@@ -39,4 +45,4 @@ const UnitsTable = ({ data, col }: Props) => {
   );
 };
 
-export default UnitsTable;
+export default ClearingOfficesTable;

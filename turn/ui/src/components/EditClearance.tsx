@@ -1,42 +1,42 @@
 import { useState, useEffect } from "react";
-import ClearanceForm from "./Form";
 import formService from "../services/form.service";
-import FormModal from "./FormModal";
 import AlertBox from "./Alert";
 
 import { ClearanceFrm } from "./Types";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
+import OfficeService from "../services/office.service";
+import ClearingOfficesTable from "./ClearingOfficesTable";
+import AddClearingOfficeForm from "./AddClearingOfficeForm";
 
-const ManageForms = () => {
+const EditClearance = () => {
 
   const [forms, setForms] = useState<ClearanceFrm[]>([]);
+  const [clearingOffices, setClearingOffices] = useState([])
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ClearanceFrm>();
   const [errors, setErrors] = useState("");
   const [updated, setUpdated] = useState(0);
   const [alert, setAlert] = useState(<></>);
 
+
   const navigate = useNavigate();
+
+  const {id} = useParams();
+  
 
   const columns = [
     {
-      name: "Unit",
-      selector: (row: ClearanceFrm) => row.unit,
-    },
-    {
-      name: "Office",
-      selector: (row: ClearanceFrm) => row.officeName,
+      name: "Clearing Office",
+      selector: (row: ClearanceFrm) => row.name,
     },
     {
       name: "Abbreviation",
-      selector: (row: ClearanceFrm) => row.officeAbbrev,
+      selector: (row: ClearanceFrm) => row.abbrev,
     },
     {
-      name: "Groups",
-      selector: (row: ClearanceFrm) => row.group,
+      name: "Type",
+      selector: (row: ClearanceFrm) => row.type,
     },
-    
-    
     {
       name: "Action",
       button: true,
@@ -73,7 +73,7 @@ const ManageForms = () => {
   const handleDelete = async (id: string) => {
     try {
       await formService.deleteForm(id).then(
-        (res) => {
+        (res: any) => {
           if (res.success === true) {
             showAlert("Form Deleted", true);
           } else {
@@ -90,28 +90,32 @@ const ManageForms = () => {
   };
 
   const handleEdit = (selectedForm: ClearanceFrm) => {
-    navigate(`/editClearance/${selectedForm.id}`);
+    console.log('hi')
+    
   };
+
 
   useEffect(() => {
     const handleFetch = async () => {
       try {
-        const res = await formService.getAllForms();
 
-        console.log('resposne: ', res)
-        
-        if (res.code) {
-          setErrors(res.message);
-        }
-        
-        setForms(res);
-      } catch (err) {
+        const clearance = await formService.getForms(id);
+        console.log('clearance: ', clearance)
+
+        setForms(clearance)
+
+        const clearingOffices = await OfficeService.getClearingOffices(id);
+    
+      
+        setClearingOffices(clearingOffices);
+      } catch (err: any) {
         showAlert(err, false);
       }
     };
   
     handleFetch();
-  }, [updated]);
+  }, []);
+
   
   
   const openModal = () => {
@@ -142,34 +146,40 @@ const ManageForms = () => {
   return (
     <>
       <div className="card m-2">
-        <div className="card-header">Manage Clearance Form</div>
+        <div className="card-header">Edit Form</div>
         <div className="card-body">
-          <h5 className="card-title">Clearance Form</h5>
-          <p className="card-text">Add or manage clearing offices in the clearance form</p>
+            <h5 className="d-inline-flex justify-content-between">
+              {forms[0]?.unit} Clearance Form
+            </h5>
+       
+          <p className="card-text"></p>
           <div className="d-inline-flex justify-content-between align-items-center mb-3">
             <div className="d-inline-flex justify-content-start h-20">
               <button className="btn btn-primary" onClick={openModal}>
-                Add Form <i className="bi bi-person-plus"></i>
+                Add Clearing office <i className="bi bi-person-plus"></i>
               </button>
             </div>
           </div>
 
           <div className="w-100 text-center">
-            <ClearanceForm data={forms} columns={columns} />
+              <ClearingOfficesTable
+                data={clearingOffices}
+                col={columns}
+              />
           </div>
         </div>
       </div>
  
       {showModal && (
-        <FormModal
+        <AddClearingOfficeForm
           show={showModal}
           setClose={closeModal}
           setAlert={showAlert}
-          selectedForm={form}
+          unitId={forms[0]?.unitId}
         />
       )}
     </>
   );
 };
 
-export default ManageForms;
+export default EditClearance;

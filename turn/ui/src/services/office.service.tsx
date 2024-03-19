@@ -60,12 +60,21 @@ const getAvailableOffices = () => {
   });
 };
 
+const getClearingOffices = async (id?: string) => {
+   return axios.get(`${API_URL}/clearingOffices/${id}`).then((res)=> {
+    return res.data
+  }).catch((err)=>{
+    return err;
+  })
+}
+
 const OfficeService = {
   createOffice,
   getOffices,
   deleteOffice,
   editOffice,
   getAvailableOffices,
+  getClearingOffices
 };
 
 export default OfficeService;

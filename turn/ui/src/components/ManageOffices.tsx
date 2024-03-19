@@ -12,6 +12,7 @@ const ManageOffices = () => {
   const [office, setOffice] = useState<Office>();
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState("");
+  
   const columns = [
     {
       name: "Name",
@@ -144,7 +145,8 @@ const ManageOffices = () => {
       <div className="card m-2">
         <div className="card-header">Manage Clearing Offices</div>
         <div className="card-body">
-        {!errors ? (<>
+        {!errors ? (
+        <>
           <h5 className="card-title">Clearing Offices</h5>
           <p className="card-text">Add or manage clearing offices.</p>
           <div className="w-50 d-inline-flex justify-content-between align-items-center mb-3">

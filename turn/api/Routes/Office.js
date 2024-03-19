@@ -13,4 +13,5 @@ router.get('/available', officeController.getOfficesAvailable);
 router.get('/test', (req, res) => {
     res.json({msg: "Hello!!"});
 });
+router.get('/clearingOffices/:id', officeController.getClearingOffices)
 module.exports = router;

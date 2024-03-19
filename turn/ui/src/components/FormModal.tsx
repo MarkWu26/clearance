@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import formService from "../services/form.service";
 import unitService from "../services/unit.service";
 import OfficeService from "../services/office.service";
+import { clearanceGroups } from "./Types";
+import groupService from "../services/groups.service";
 
 interface Props {
     show: boolean;
@@ -28,12 +30,15 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
     const [chosenUnit, setChosenUnit] = useState(selectedForm?.unit)
     const [abbrevChosen, setAbbrevChosen] = useState(selectedForm?.officeAbbrev ?? "");
     const [groupChosen, setGroupChosen] = useState(selectedForm?.group ?? "");
+    const [groups, setGroups] = useState<clearanceGroups [] | undefined>([])
  
     useEffect(() => {
       const fetchData = async () => {
         try {
           const offices = await OfficeService.getAvailableOffices();
           const units = await unitService.getUnits();
+          const groups = await groupService.getGroups();
+          setGroups(groups)
           setList(offices);
           setUnitList(units);
         } catch (error) {
@@ -221,6 +226,7 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
                   className="form-select mb-2 poppins-reg "
                   id="group"
                   onChange={(e) => {
+                    console.log('target value: ', e.target.value)
                     setGroupChosen(e.target.value)
                     setCustomErrors([]);
                   }}
@@ -232,28 +238,13 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
                       Choose Group
                     </option>
                   )}
-    
-                  <option value="AG" id="group_1">
-                        Academic
-                      </option>
-                      <option value="FG" id="group_2">
-                        Financial
-                      </option>
-                      <option value="AdG" id="group_3">
-                        Administrative
-                      </option>
-                      <option value="LG" id="group_4">
-                        Library
-                      </option>
-                      <option value="HSG" id="group_5">
-                        Health Services
-                      </option>
-                      <option value="GG" id="group_6">
-                        Graduation
-                      </option>
-                      <option value="SaRG" id="group_7">
-                        Sports and Recreation
-                      </option>
+
+                  {groups?.map((group)=> {
+                    return (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    )
+                  })}
+  
                 </select>
                 {errors.group && (
                   <p key="group_err" className="text-danger">

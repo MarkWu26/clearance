@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ClearanceForm from "./Form";
 import formService from "../services/form.service";
 import FormModal from "./FormModal";
 import AlertBox from "./Alert";
-
+import { AxiosError } from "axios";
 import { ClearanceFrm } from "./Types";
-import {useNavigate} from "react-router-dom";
 
-const ManageForms = () => {
+const AddClearance = () => {
 
   const [forms, setForms] = useState<ClearanceFrm[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -16,13 +15,7 @@ const ManageForms = () => {
   const [updated, setUpdated] = useState(0);
   const [alert, setAlert] = useState(<></>);
 
-  const navigate = useNavigate();
-
   const columns = [
-    {
-      name: "Unit",
-      selector: (row: ClearanceFrm) => row.unit,
-    },
     {
       name: "Office",
       selector: (row: ClearanceFrm) => row.officeName,
@@ -32,11 +25,13 @@ const ManageForms = () => {
       selector: (row: ClearanceFrm) => row.officeAbbrev,
     },
     {
-      name: "Groups",
+      name: "Group",
       selector: (row: ClearanceFrm) => row.group,
     },
-    
-    
+    {
+      name: "Unit",
+      selector: (row: ClearanceFrm) => row.unit,
+    },
     {
       name: "Action",
       button: true,
@@ -90,15 +85,14 @@ const ManageForms = () => {
   };
 
   const handleEdit = (selectedForm: ClearanceFrm) => {
-    navigate(`/editClearance/${selectedForm.id}`);
+    setForm(selectedForm);
+    setShowModal(true);
   };
 
   useEffect(() => {
     const handleFetch = async () => {
       try {
-        const res = await formService.getAllForms();
-
-        console.log('resposne: ', res)
+        const res = await formService.getForms('office_id');
         
         if (res.code) {
           setErrors(res.message);
@@ -145,12 +139,12 @@ const ManageForms = () => {
         <div className="card-header">Manage Clearance Form</div>
         <div className="card-body">
           <h5 className="card-title">Clearance Form</h5>
-          <p className="card-text">Add or manage clearing offices in the clearance form</p>
+          <p className="card-text">Add or manage fields in the clearance form</p>
           <div className="d-inline-flex justify-content-between align-items-center mb-3">
             <div className="d-inline-flex justify-content-start h-20">
-              <button className="btn btn-primary" onClick={openModal}>
-                Add Form <i className="bi bi-person-plus"></i>
-              </button>
+            {/*   <button className="btn btn-primary" onClick={openModal}>
+                Add Field <i className="bi bi-person-plus"></i>
+              </button> */}
             </div>
           </div>
 
@@ -161,7 +155,7 @@ const ManageForms = () => {
       </div>
  
       {showModal && (
-        <FormModal
+        <FormModal  
           show={showModal}
           setClose={closeModal}
           setAlert={showAlert}
@@ -172,4 +166,4 @@ const ManageForms = () => {
   );
 };
 
-export default ManageForms;
+export default AddClearance;

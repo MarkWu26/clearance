@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import jwt from "jwt-decode";
+import { ClearanceFrm } from "../components/Types";
 
 const API_URL = "http://localhost:3000/forms";
 
@@ -55,22 +56,34 @@ const editForm = async (
   }
 };
 
-const getForms = async (id?: string): Promise<ApiResponse> => {
+const getForms = async (id?: string): Promise<ClearanceFrm[]> => {
+
   const url = id ? `${API_URL}/forms/${id}` : `${API_URL}/forms`;
   try {
-    const response: AxiosResponse<ApiResponse> = await axios.get(url);
+    const response = await axios.get(url);
     return response.data;
   } catch (error: any) {
     console.error("Get Forms Error:", error);
-    return { success: false, error: error.message || "Unknown error" };
+    return error;
   }
 };
+
+const getAllForms = async () => {
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.get(API_URL);
+    return response.data;
+  } catch (error: any) {
+    console.error("Get All forms Error:", error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+}
 
 const formService = {
   createForm,
   getForms,
   deleteForm,
   editForm,
+  getAllForms
 };
 
 export default formService;

@@ -4,6 +4,10 @@ export type ClearanceFrm = {
   officeName: string;
   unit: string,
   group: string;
+  name?: string;
+  abbrev?: string;
+  type?: string;
+  unitId?: string;
 };
 
 export type Unit = {
@@ -19,6 +23,12 @@ export type Unit = {
     unit: string;
     type: string;
   };
+
+  export type clearanceGroups = {
+    id: string;
+    name: string;
+    abbrev: string;
+  }
 
   export type User = {
     id: string;
