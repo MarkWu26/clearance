@@ -2,22 +2,22 @@ import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 
 import { useEffect, useState } from "react";
-import { ClearanceFrm, Unit } from "./Types";
+import {  Office,  } from "./Types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import OfficeService from "../services/office.service";
-import unitService from "../services/unit.service";
 import { z } from "zod";
-import formService from "../services/form.service";
+import AlertBox from "./Alert";
 import { useForm } from "react-hook-form";
-import groupService from "../services/groups.service";
-import { clearanceGroups } from "./Types";
+
 
 interface addClearingOfficeProps {
     show: boolean;
     setClose: () => void;
-    setAlert: (message: string, success: boolean) => void;
-    unitId?: string
-    selectedForm?: ClearanceFrm | null;
+    unit_id?: string
+    clearingOffices: Office[]
+    setClearingOffices: (value: (prevClearingOffices: Office[]) => Office[]) => void; // Update the type of setClearingOffices
+    selectedOffice?: Office;
+    setAlert: React.Dispatch<React.SetStateAction<JSX.Element>>
 }
 
 type Err = {
@@ -28,57 +28,53 @@ type Err = {
 const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
     show,
     setClose,
-    setAlert,
-    unitId
+    unit_id,
+    selectedOffice,
+    setAlert
 }) => {
-
+/* 
+  console.log('selected office: ', selectedOffice?.id) */
     const [list, setList] = useState<string[]>([]);
-    const [unitList, setUnitList] = useState<Unit[] | undefined>([]);
-    const [groups, setGroups] = useState<clearanceGroups [] | undefined>([])
+
+
     const [customErrors, setCustomErrors] = useState<Err[]>();
-    console.log('unit: ', unitId)
-   
+    const [typeChosen, setTypeChosen] = useState(selectedOffice?.type ?? "");
+    const [chosenOffice, setChosenOffice] = useState(selectedOffice?.name ?? "");
 
     const schema = z.object({
-        officeName: z
+        name: z
           .string()
           .nonempty("Office name is required")
           ,
-        officeAbbrev: z
+        abbrev: z
           .string()
           .regex(
-            new RegExp(/^[a-zA-Z0-9. -]+$/),
-            "Must not contain special characters"
+            new RegExp(/^[a-zA-Z0-9. -]{0,5}$/),
+            "Must not contain more than 5 characters and special characters"
           ),
-        unit: z
-          .string()
-          .nonempty("Unit name is required")
-          ,
-
+        type: z.string().nonempty("Type is required")
     });
 
-
+    type Office = z.infer<typeof schema>;
     const {
         register,
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<ClearanceFrm>({ 
+    } = useForm<Office>({ 
         resolver: zodResolver(schema), 
-        defaultValues:{
-            officeName: list[0]
-        } 
+        defaultValues: {
+          name: selectedOffice?.name ?? ""
+        }
     });
+
 
     useEffect(() => {
         const fetchData = async () => {
           try {
             const offices = await OfficeService.getAvailableOffices();
-            const units = await unitService.getUnits();
-            const groups = await groupService.getGroups();
             setList(offices);
-            setUnitList(units);
-            setGroups(groups)
+        
           } catch (error) {
             console.error("Error fetching data:", error);
           }
@@ -89,29 +85,92 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
 
    
     
-    const onSubmit = handleSubmit(async (data) => {
-            try {
-              const res = await formService.createForm(
-                unitId || '',
-                data.officeName,
-                data.officeAbbrev, 
-                data.group
-              );
-      
-              if (res.success === true) {
-                setAlert("Clearing office added!", true);
+  const onSubmitOffice = handleSubmit(async (data) => {
+           
+
+              if(selectedOffice){
+                console.log('abbrev: ', data.abbrev,)
+                OfficeService
+                .editOffice(
+                  selectedOffice.id || '',
+                  data.name,
+                  data.abbrev,
+                  unit_id || '',
+                  data.type || ''
+                )
+                .then(
+                  (res) => {
+                    // setAlert();
+                    console.log(res.success)
+                    if (res.success === true) {
+                      setAlert(<AlertBox
+                      isSuccess
+                      message='Office edited!'
+                      duration={2000}
+                      onClose={() => {
+                        setAlert(<></>);
+                      }}
+                    />);
+                    } else {
+                      const errorMessage = res.error || "An unknown error occurred"; 
+                      setAlert(<AlertBox
+                        isSuccess={false}
+                        message={errorMessage}
+                        duration={2000}
+                        onClose={() => {
+                          setAlert(<></>);
+                        }}
+                      />);
+                    }
+                   
+                    setClose();
+                  },
+                  (error) => {
+                    setCustomErrors(error.response.data.errors);
+                  }
+                );
               } else {
-                const errorMessage = res.error || "An unknown error occurred"; 
-                setAlert(errorMessage, false);
+                try {
+                  const res = await OfficeService.createOffice(
+                    data.name,
+                    data.abbrev, 
+                    unit_id || '',
+                    data.type || ''   
+                  );
+          
+                  if (res.success === true) {
+                    
+                    setAlert(<AlertBox
+                      isSuccess
+                      message='Clearing office added!'
+                      duration={2000}
+                      onClose={() => {
+                        setAlert(<></>);
+                      }}
+                    />);
+                  } else {
+                    const errorMessage = res.error || "An unknown error occurred"; 
+                    setAlert(<AlertBox
+                      isSuccess
+                      message={errorMessage}
+                      duration={2000}
+                      onClose={() => {
+                        setAlert(<></>);
+                      }}
+                    />);
+                  }
+                  
+                  setClose();
+                } catch (error: any) {
+                  setCustomErrors(error.response.data.errors);
+                }
               }
               
-              setClose();
-            } catch (error: any) {
-              setCustomErrors(error.response.data.errors);
-            }
 
             reset();
       });
+
+      
   
 
     return ( 
@@ -119,7 +178,7 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
         <Modal show={show} onHide={setClose}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Add Clearing Office
+            {selectedOffice ? "Edit Office" : "Create Office"}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -128,21 +187,23 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
 
               <label className="form-label frm-label">Office</label>
               <select 
-                {...register("officeName")}
+                {...register("name")}
                 className="form-select mb-2 poppins-reg "
                 id="officeName"
                 onChange={(e) => {
-                 /*  setChosenOffice(e.target.value) */
+                  setChosenOffice(e.target.value)
                   setCustomErrors([]);
                 }}
-              defaultValue={list[0]}
-               /*  value={ chosenOffice } */
-                
+                value={ chosenOffice }
               >
               
-                  <option value="" disabled>
-                    Choose Office
-                  </option>
+             
+              {selectedOffice ? "" : (
+                <option value="" disabled>
+                  Choose Office
+                </option>
+              )}
+           
                
                 {list.map((office, i) => {
                 return (
@@ -152,62 +213,70 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
                   );
                 })}
               </select>
-              {errors.officeName && (
-                <p key="officeName_err" className="text-danger">
-                  {errors.officeName.message}
+              {errors.name && (
+                <p key="office_err" className="text-danger">
+                  {errors.name.message}
                 </p>
               )}
   
               <label className="form-label frm-label">Abbreviation</label>
               <input
-                {...register("officeAbbrev")}
+                {...register("abbrev")}
                 type="text"
                 className="form-control mb-2 poppins-reg "
-                id="OfficeAbbrev"
+                id="abbrev"
                 placeholder="e.g. College, Graduate School"
                 onChange={() => {
                   setCustomErrors([]);
                 }}
+                defaultValue={selectedOffice?.abbrev}
               
               />
-              {errors.officeAbbrev && (
-                <p key="officeAbbrev_err" className="text-danger">
-                  {errors.officeAbbrev.message}
+              {errors.abbrev && (
+                <p key="abbrev_err" className="text-danger">
+                  {errors.abbrev.message}
                 </p>
               )}
 
 
-              <label className="form-label frm-label">Group</label>
-                <select
-                  {...register("group")}
-                  className="form-select mb-2 poppins-reg "
-                  id="group"
-                  onChange={(e) => {
-                    console.log('target value: ', e.target.value)
-                  /*   setGroupChosen(e.target.value) */
-                    setCustomErrors([]);
-                  }}
-                  
-                  /* value={ groupChosen } */
-                >
-                 
-                    <option value="" disabled>
-                      Choose Group
-                    </option>
-            
+            <label className="form-label frm-label">Type</label>
+            <select
+              {...register("type")}
+              className="form-select mb-2 poppins-reg "
+              id="type"
+              onChange={(e) => {
+                setTypeChosen(e.target.value)
+                setCustomErrors([]);
+              }}
+              
+              value={ typeChosen }
+            >
+              
+                <option value="" disabled >
+                  Choose Type
+                </option>
 
-                  {groups?.map((group)=> {
-                    return (
-                      <option key={group.id} value={group.id}>{group.name}</option>
-                    )
-                  })}
-  
-                </select>
-                {errors.group && (
-                  <p key="group_err" className="text-danger">
-                    {errors.group.message}
-                  </p>
-                )}
+              <option value="OFFICE" id="type_1">
+                    Office
+                  </option>
+                  <option value="FIN" id="type_2">
+                    Finance
+                  </option>
+                  <option value="LIB" id="type_3">
+                    Library
+                  </option>
+                  <option value="DEAN" id="type_4">
+                    School
+                  </option>
+                  <option value="DEPT" id="type_4">
+                    Department
+                  </option>
+            </select>
+            {errors.type && (
+              <p key="type_err" className="text-danger">
+                {errors.type.message}
+              </p>
+            )}
 
 
         
@@ -217,11 +286,13 @@ const AddClearingOfficeForm: React.FC<addClearingOfficeProps> = ({
             <Button variant="secondary" onClick={setClose}>
               Close
             </Button>
-            <Button variant="primary" onClick={onSubmit}>
-              Save Changes
+            <Button variant="primary" onClick={onSubmitOffice}>
+             {selectedOffice ? 'Save' : 'Add Clearing Office'} 
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {alert}
       </>
      );
 }

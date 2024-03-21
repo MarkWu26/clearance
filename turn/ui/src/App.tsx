@@ -129,7 +129,7 @@ function App() {
           />
 
            <Route
-            path="/editClearance/:id"
+            path="/clearanceform/:id"
             element={
               isAuthenticated ? (
                 <EditClearance />

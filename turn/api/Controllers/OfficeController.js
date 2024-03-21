@@ -27,6 +27,7 @@ const createOffice = async (req, res) => {
             console.log(err)
             return res.json({success: false, error: "Database error"});
         }else{
+            console.log('data: ', data)
             res.json({
                 success: true
             });
@@ -95,7 +96,7 @@ const updateOffice = async (req, res) => {
 
     const { name, abbrev, unit_id, type } = req.body;
     const { id } = req.params;
-
+    console.log('abbrev: ', abbrev)
     
     //check validation errors
     const errors = validationResult(req);
@@ -155,7 +156,7 @@ const getClearingOffices = (req, res) => {
     const {id} = req.params;
 
     db.execute(`SELECT form.unit as clearance_unit FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id WHERE form.id = ${id}`, (err, data) => { 
-        console.log('unit: ', data)
+       
         const unit_id = data[0].clearance_unit
 
         db.execute(`SELECT * FROM clearing_offices as office WHERE office.unit_id = ${unit_id}`, (err, data) => {
@@ -169,7 +170,7 @@ const getClearingOffices = (req, res) => {
                 clearingOffices.push(item)
             })
 
-            console.log('clearing Offices: ', clearingOffices)
+        
            
             return res.status(200).json(clearingOffices);
         })

@@ -90,7 +90,7 @@ const ManageForms = () => {
   };
 
   const handleEdit = (selectedForm: ClearanceFrm) => {
-    navigate(`/editClearance/${selectedForm.id}`);
+    navigate(`/clearanceform/${selectedForm.id}`);
   };
 
   useEffect(() => {

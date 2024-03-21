@@ -149,6 +149,15 @@ const AdminLayout = ({ sidebarStatus, toggleSidebar }: Props) => {
             icon: "bi bi-person-badge",
           });
           break;
+       /*  case "edit_form": 
+        newLinks.push({
+          id: 49,
+          name: "Edit Form",
+          link: "/clearanceform/:formId",
+          permission: "edit_form",
+          icon: "bi bi-person-badge",
+        })
+        break; */
         default:
           break;
       }

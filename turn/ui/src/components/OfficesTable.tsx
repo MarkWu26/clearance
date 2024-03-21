@@ -2,7 +2,7 @@ import {Office} from "./Types";
 
 interface Props {
   data: Office[] | [object];
-  col: Object[];
+  col: object[];
   
 }
 import { useEffect, useState } from "react";

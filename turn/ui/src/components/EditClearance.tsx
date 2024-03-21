@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import formService from "../services/form.service";
 import AlertBox from "./Alert";
 
-import { ClearanceFrm } from "./Types";
+import { ClearanceFrm, Office } from "./Types";
 import {useNavigate, useParams} from "react-router-dom";
 import OfficeService from "../services/office.service";
 import ClearingOfficesTable from "./ClearingOfficesTable";
@@ -11,12 +11,14 @@ import AddClearingOfficeForm from "./AddClearingOfficeForm";
 const EditClearance = () => {
 
   const [forms, setForms] = useState<ClearanceFrm[]>([]);
-  const [clearingOffices, setClearingOffices] = useState([])
+  const [clearingOffices, setClearingOffices] = useState<Office[]>([])
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<ClearanceFrm>();
   const [errors, setErrors] = useState("");
   const [updated, setUpdated] = useState(0);
   const [alert, setAlert] = useState(<></>);
+  const [selectedOffice, setSelectedOffice] = useState<Office>()
+
 
 
   const navigate = useNavigate();
@@ -27,21 +29,22 @@ const EditClearance = () => {
   const columns = [
     {
       name: "Clearing Office",
-      selector: (row: ClearanceFrm) => row.name,
+      selector: (row: Office) => row.name,
     },
     {
       name: "Abbreviation",
-      selector: (row: ClearanceFrm) => row.abbrev,
+      selector: (row: Office) => row.abbrev,
     },
     {
       name: "Type",
-      selector: (row: ClearanceFrm) => row.type,
+      selector: (row: Office) => row.type,
     },
     {
       name: "Action",
       button: true,
-      cell: (row: ClearanceFrm) => (
+      cell: (row: Office) => (
         <>
+        
           <button
             className="btn"
             title="Edit"
@@ -72,10 +75,10 @@ const EditClearance = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await formService.deleteForm(id).then(
-        (res: any) => {
+      await OfficeService.deleteOffice(id).then(
+        (res) => {
           if (res.success === true) {
-            showAlert("Form Deleted", true);
+            showAlert("Office Deleted", true);
           } else {
             showAlert(res.error, false);
           }
@@ -89,9 +92,9 @@ const EditClearance = () => {
     }
   };
 
-  const handleEdit = (selectedForm: ClearanceFrm) => {
-    console.log('hi')
-    
+  const handleEdit = (office: Office) => {
+    setSelectedOffice(office)
+    setShowModal(true)
   };
 
 
@@ -114,11 +117,10 @@ const EditClearance = () => {
     };
   
     handleFetch();
-  }, []);
+  }, [alert]);
 
-  
-  
   const openModal = () => {
+    setSelectedOffice(undefined)
     setShowModal(true);
   };
 
@@ -174,10 +176,15 @@ const EditClearance = () => {
         <AddClearingOfficeForm
           show={showModal}
           setClose={closeModal}
-          setAlert={showAlert}
-          unitId={forms[0]?.unitId}
+          unit_id={forms[0]?.unitId}
+          clearingOffices={clearingOffices}
+          selectedOffice={selectedOffice}
+          setAlert={setAlert}
+          setClearingOffices={(value: (prevClearingOffice: Office[]) => Office[]) => setClearingOffices(value)}
         />
       )}
+
+      {alert}
     </>
   );
 };

@@ -34,6 +34,7 @@ const editOffice = (
   unit_id: string,
   type: string
 ) => {
+  console.log('sending abbrev: ', abbrev)
   return axios
     .put(API_URL + "/"+id, {name, abbrev, unit_id, type })
     .then((res) => {
