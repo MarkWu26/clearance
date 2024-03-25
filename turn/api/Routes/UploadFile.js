@@ -76,7 +76,22 @@ router.get('/uploaded-files', async (req, res) => {
 });
 
 // Correct route setup in your server code
-router.post('/upload-and-parse', UploadFileController.uploadAndParse);
+router.post('/upload-and-parse', upload.array('file', 5), validateMimeTypes, async(req,res) => {
+  try {
+    for (let file of req.files) {
+      await UploadFileController.uploadAndParse(file);
+      
+    }
+    res.json({
+      success: true,
+      message: 'All files have been processed.'
+    });
+  } catch (error) {
+    console.error('Error processing files:', error);
+    res.status(500).json({ success: false, message: 'Error processing files. Please try again.' });
+  }
+ 
+});
 
 
 module.exports = router;

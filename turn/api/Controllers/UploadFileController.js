@@ -55,10 +55,14 @@ const insertDetailRecords = async (connection, parsedItems, batchNumber) => {
     await connection.execute(query, values);
 };
 
-const uploadAndParse = async (req, res) => {
-    if (!req.file) {
+const uploadAndParse = async (filePath) => {
+  
+    if (!filePath) {
+        console.log('no file!')
         return res.status(400).json({ message: 'No file was uploaded.' });
     }
+
+    console.log('req file: ', filePath )
 
     // Validate file type
     const validTypes = ['text/csv', 'text/xml', 'application/json', 'text/plain', 
@@ -66,17 +70,17 @@ const uploadAndParse = async (req, res) => {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ]; 
 
-    if (!validTypes.includes(req.file.mimetype)) {
-        fs.unlinkSync(req.file.path); 
+    if (!validTypes.includes(filePath.mimetype)) {
+        fs.unlinkSync(filePath.path); 
         return res.status(400).json({ message: 'Invalid file type.' });
     }
 
     try {
-        const fileContent = await fs.readFile(req.file.path, req.file.mimetype === 'application/pdf' ? null : 'utf8');
-        await fs.unlink(req.file.path); // Delete the file after reading
+        const fileContent = await fs.readFile(filePath.path, filePath.mimetype === 'application/pdf' ? null : 'utf8');
+        /* await fs.unlink(filePath.path); */ // Delete the file after reading
 
         let parsedItems;
-        switch (req.file.mimetype) {
+        switch (filePath.mimetype) {
             case 'text/csv':
                 parsedItems = parseCSV(fileContent);
                 break;
@@ -90,26 +94,29 @@ const uploadAndParse = async (req, res) => {
                 parsedItems = parsePLAIN(fileContent);
                 break;
             case 'application/pdf':
-                parsedItems = await parsePDF(req.file.path); // For PDF, pass the file path
+                parsedItems = await parsePDF(filePath.path); // For PDF, pass the file path
                 break;
             case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                parsedItems = await parseDOCX(req.file.path); // For DOCX, pass the file path
+                parsedItems = await parseDOCX(filePath.path); // For DOCX, pass the file path
                 break;
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-                parsedItems = parseXLSX(req.file.path); // For XLSX, pass the file path
+                parsedItems = parseXLSX(filePath.path); // For XLSX, pass the file path
                 break;
             default:
-                return res.status(400).json({ message: 'Unsupported file type.' });
+                /* return res.status(400).json({ message: 'Unsupported file type.' }); */
+                return {success: 'false'}
         }
-
-        if (parsedItems && parsedItems.length > 0) {
+        return { processed: true, filePath: filePath.path,  };
+       /*  if (parsedItems && parsedItems.length > 0) {
+            console.log('okay')
             await processAndInsertData(parsedItems, res);
         } else {
             res.status(400).json({ message: 'No valid data found in file.' });
-        }
+        } */
     } catch (error) {
-        console.error('Upload and Parse Error:', error);
-        res.status(500).json({ message: 'Server error during file processing.' });
+       /*  console.error('Upload and Parse Error:', error);
+        res.status(500).json({ message: 'Server error during file processing.' }); */
+        return {success: 'false'}
     }
 };
 
@@ -239,6 +246,7 @@ const transformPDFData = (text) => {
 const parseDOCX = async (filePath) => {
     try {
         const result = await mammoth.extractRawText({ path: filePath });
+       /*  console.log('result: ', result, 'result.value: ', result.value) */
         return transformDOCXData(result.value);
     } catch (error) {
         console.error('Error parsing DOCX:', error);
@@ -247,21 +255,62 @@ const parseDOCX = async (filePath) => {
 };
 
 const transformDOCXData = (text) => {
-    const items = [];
+    const records = [];
     const lines = text.split('\n');
-        for (let line of lines) {
-            const [idnum, officeId, unit, holdType, remarks, fines] = line.split(',');
-            items.push({
-                idnum: idnum.trim(),
-                office_id: parseInt(officeId.trim(), 10),
-                unit: unit.trim(),
-                hold_type: parseInt(holdType.trim(), 10),
-                remarks: remarks.trim(),
-                fines: parseFloat(fines.trim()),
-                added_at: new Date(),
-            });
+    const nameRegex = /^([A-Z][A-Z\s,.]+?)(?=\s+CO\b(?!4))/;
+    const phoneRegex = /CO\s+\d{4}\s+\d{4}\s+(.*)/g;
+    const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]+)/;
+    const pendingFinesRegex = /Total Pending Fines:\s+Php([\d.,]+)/
+    let currentRecord = {};
+    for(let line of lines){
+        const phoneMatch = phoneRegex.exec(line);
+        const nameMatch = line.match(nameRegex);
+        const assessedFinesMatch = assessedFinesRegex.exec(line);
+        const pendingFinesMatch = pendingFinesRegex.exec(line)
+        //name
+        if(phoneMatch || nameMatch){
+            if(Object.keys(currentRecord).length > 0){
+                records.push(currentRecord);
+            }
+            currentRecord = {}
+
+            if(nameMatch){
+                currentRecord.name = nameMatch[0].trim()
+            }
+
+            if(phoneMatch){
+                currentRecord.phoneNumber = phoneMatch[1];
+            }else {
+                currentRecord.phoneNumber = 0;
+            }
+        } else if (assessedFinesMatch || pendingFinesMatch){
+            if(assessedFinesMatch){
+                currentRecord.assessedFines = parseFloat(assessedFinesMatch[1].replace(",", ""))
+            } else if (pendingFinesMatch){
+                currentRecord.pendingFines = parseFloat(pendingFinesMatch[1].replace(",", ""))
+            }
+            
         }
-    return items;
+      
+     /*    if(nameMatch){
+            const name = nameMatch[0].trim()
+        } */
+
+        //phone number
+      /*   if (phoneMatch) {
+            const phoneNumber = phoneMatch[1]; 
+            console.log('Phone number:', phoneNumber);
+        } */
+      
+        
+    }
+  //  console.log('items: ', items)
+  if(Object.keys(currentRecord).length > 0){
+    records.push(currentRecord)
+  }
+
+  console.log('records: ', records)
+  /*   return items; */
 };
 
 const parseXLSX = (filePath) => {

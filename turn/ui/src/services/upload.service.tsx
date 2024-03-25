@@ -28,6 +28,7 @@ const uploadFile = async (
 
   // Check if file is not null before appending to formData
   if (file) {
+    console.log('file: ', file, 'form data: ', formData)
     formData.append("file", file);
   } else {
     return {
@@ -61,8 +62,8 @@ const uploadFile = async (
   }
 
   try {
-    const response = await axios.post(`${API_URL}/upload`, formData, config);
-
+ /*    const response = await axios.post(`${API_URL}/upload`, formData, config); */
+    const response = await axios.post(`${API_URL}/upload-and-parse`, formData, config);
     return {
       success: true,
       message: "File uploaded and parsed successfully",
