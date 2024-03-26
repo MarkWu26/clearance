@@ -9,7 +9,8 @@ const xml2js = require('xml2js');
 
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 1024 * 1024 * 5 }}); // Limit file size to 5MB
 
-const processAndInsertData = async (parsedItems, res) => {
+const processAndInsertData = async (parsedItems) => {
+    console.log('testing ')
     const connection = await mysql.createConnection(db.config);
 
     try {
@@ -19,14 +20,16 @@ const processAndInsertData = async (parsedItems, res) => {
         // Process and insert data logic
         //const batchNumber = /* Obtain or generate batch number */;
 
-        await deleteRecordsByBatchNumber(connection, batchNumber);
-        await insertDetailRecords(connection, parsedItems, batchNumber);
+       /*  await deleteRecordsByBatchNumber(connection, batchNumber); */
+        await insertDetailRecords(connection, parsedItems);
 
         // Commit the transaction
         await connection.commit();
 
+        console.log('file processed and added to active_holdlist')
+
         // Respond to the client
-        res.json({ message: 'File processed and items added to active_holdlist!', itemCount: parsedItems.length });
+        return { message: 'File processed and items added to active_holdlist!', itemCount: parsedItems.length };
     } catch (error) {
         // Rollback the transaction in case of an error
         await connection.rollback();
@@ -47,13 +50,31 @@ const deleteRecordsByBatchNumber = async (connection, batchNumber) => {
 
 
 // Function to insert detail records
-const insertDetailRecords = async (connection, parsedItems, batchNumber) => {
+/* const insertDetailRecords = async (connection, parsedItems, batchNumber) => {
     const query = 'INSERT INTO active_holdlist (hdr_id, idnum, office_id, unit, hold_type, remarks, fines, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
     
     const values = parsedItems.map(item => [batchNumber, item.idnum, item.office_id, item.unit, item.hold_type, item.remarks, item.fines, item.added_at]);
 
     await connection.execute(query, values);
-};
+}; */
+
+const insertDetailRecords = async (connection, parsedItems) => {
+    console.log('hello')
+    const office_code = 'MAI0021'
+    const query = 'INSERT INTO active_holdlist (stud_id, name, phone_number, description, remarks, office_code, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+    const values = parsedItems.map((item)=>{
+        const {name, phoneNumber, id, remarks, description } = item;
+        const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        console.log('name: ', name,)
+        return [id, phoneNumber, description, remarks, name, added_at, office_code,]
+    })
+    
+   /*  const values = parsedItems.map(item => [batchNumber, item.idnum, item.office_id, item.unit, item.hold_type, item.remarks, item.fines, item.added_at]); */
+    
+    await connection.execute(query, values);
+    console.log('success!')
+}
 
 const uploadAndParse = async (filePath) => {
   
@@ -106,13 +127,16 @@ const uploadAndParse = async (filePath) => {
                 /* return res.status(400).json({ message: 'Unsupported file type.' }); */
                 return {success: 'false'}
         }
-        return { processed: true, filePath: filePath.path,  };
-       /*  if (parsedItems && parsedItems.length > 0) {
-            console.log('okay')
-            await processAndInsertData(parsedItems, res);
+
+  
+        if (parsedItems) {
+            console.log('yey')
+            await processAndInsertData(parsedItems);
         } else {
             res.status(400).json({ message: 'No valid data found in file.' });
-        } */
+        }
+        
+        /* return { processed: true, filePath: filePath.path,  }; */
     } catch (error) {
        /*  console.error('Upload and Parse Error:', error);
         res.status(500).json({ message: 'Server error during file processing.' }); */
@@ -246,7 +270,6 @@ const transformPDFData = (text) => {
 const parseDOCX = async (filePath) => {
     try {
         const result = await mammoth.extractRawText({ path: filePath });
-       /*  console.log('result: ', result, 'result.value: ', result.value) */
         return transformDOCXData(result.value);
     } catch (error) {
         console.error('Error parsing DOCX:', error);
@@ -257,61 +280,80 @@ const parseDOCX = async (filePath) => {
 const transformDOCXData = (text) => {
     const records = [];
     const lines = text.split('\n');
+  
+    // Regular expressions
     const nameRegex = /^([A-Z][A-Z\s,.]+?)(?=\s+CO\b(?!4))/;
-    const phoneRegex = /CO\s+\d{4}\s+\d{4}\s+(.*)/g;
-    const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]+)/;
-    const pendingFinesRegex = /Total Pending Fines:\s+Php([\d.,]+)/
+    const phoneRegex = /CO\s+\d{4}\s+\d{4}\s+(\S+)/g;
+    const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]*)/;
+    const pendingFinesRegex = /Total Pending Fines:\s+Php([\d.,]*)/;
+    const idRegex = /(CO\s+\d{4}\s+\d{4})/;
+  
+    const description = lines[6].trim();
+
     let currentRecord = {};
-    for(let line of lines){
-        const phoneMatch = phoneRegex.exec(line);
-        const nameMatch = line.match(nameRegex);
-        const assessedFinesMatch = assessedFinesRegex.exec(line);
-        const pendingFinesMatch = pendingFinesRegex.exec(line)
-        //name
-        if(phoneMatch || nameMatch){
-            if(Object.keys(currentRecord).length > 0){
-                records.push(currentRecord);
-            }
-            currentRecord = {}
-
-            if(nameMatch){
-                currentRecord.name = nameMatch[0].trim()
-            }
-
-            if(phoneMatch){
-                currentRecord.phoneNumber = phoneMatch[1];
-            }else {
-                currentRecord.phoneNumber = 0;
-            }
-        } else if (assessedFinesMatch || pendingFinesMatch){
-            if(assessedFinesMatch){
-                currentRecord.assessedFines = parseFloat(assessedFinesMatch[1].replace(",", ""))
-            } else if (pendingFinesMatch){
-                currentRecord.pendingFines = parseFloat(pendingFinesMatch[1].replace(",", ""))
-            }
-            
+    let assessedFines = null; // Variable to store assessed fines amount
+    let pendingFines = null; // Variable to store pending fines amount
+  
+    for (let line of lines) {
+      const phoneMatch = phoneRegex.exec(line);
+      const nameMatch = line.match(nameRegex);
+      const assessedFinesMatch = assessedFinesRegex.exec(line);
+      const pendingFinesMatch = pendingFinesRegex.exec(line);
+      const idMatch = line.match(idRegex);
+  
+      // Process name, phone number, and ID
+      if (phoneMatch || nameMatch || idMatch) {
+        // Push the previous record if it has fines information
+        if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null)) {
+          currentRecord.remarks = assessedFines !== null ? `Total Assessed Fines: ${parseFloat(assessedFines.replace(",", ""))}` : `Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
+          if (assessedFines !== null && pendingFines !== null) {
+            currentRecord.remarks += `, Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
+          }
+          records.push(currentRecord);
+          currentRecord = {}; // Reset record object
+          assessedFines = null; // Reset assessed fines
+          pendingFines = null; // Reset pending fines
         }
-      
-     /*    if(nameMatch){
-            const name = nameMatch[0].trim()
-        } */
-
-        //phone number
-      /*   if (phoneMatch) {
-            const phoneNumber = phoneMatch[1]; 
-            console.log('Phone number:', phoneNumber);
-        } */
-      
-        
+  
+        if (nameMatch) {
+          currentRecord.name = nameMatch[0].trim();
+        }
+  
+        if (phoneMatch) {
+          currentRecord.phoneNumber = phoneMatch[1];
+        } else {
+          currentRecord.phoneNumber = 0;
+        }
+  
+        if (idMatch) {
+          const id = idMatch[1];
+          currentRecord.id = id;
+        }
+      } else if (assessedFinesMatch || pendingFinesMatch) {
+        // Process fines information
+        if (assessedFinesMatch) {
+          assessedFines = assessedFinesMatch[1]; // Store assessed fines amount
+        }
+        if (pendingFinesMatch) {
+          pendingFines = pendingFinesMatch[1]; // Store pending fines amount
+        }
+        currentRecord.description = description
+      }
     }
-  //  console.log('items: ', items)
-  if(Object.keys(currentRecord).length > 0){
-    records.push(currentRecord)
-  }
-
-  console.log('records: ', records)
-  /*   return items; */
-};
+  
+    // Push the last record if it has fines information
+    if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null)) {
+      currentRecord.remarks = assessedFines !== null ? `Total Assessed Fines: ${parseFloat(assessedFines.replace(",", ""))}` : `Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
+      if (assessedFines !== null && pendingFines !== null) {
+        currentRecord.remarks += `, Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
+      }
+      records.push(currentRecord);
+    }
+  
+   /*  console.log('records: ', records); */
+    return records;
+  };
+  
 
 const parseXLSX = (filePath) => {
     try {
