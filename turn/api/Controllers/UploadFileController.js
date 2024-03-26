@@ -63,17 +63,33 @@ const insertDetailRecords = async (connection, parsedItems) => {
     const office_code = 'MAI0021'
     const query = 'INSERT INTO active_holdlist (stud_id, name, phone_number, description, remarks, office_code, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-    const values = parsedItems.map((item)=>{
+    for (const item of parsedItems){
+        let {name, phoneNumber, id, remarks, description } = item;
+        const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        if(!name){
+            name = null
+        }
+        else if (!id){
+            id = null;
+        } else if (!remarks){
+            remarks = null
+        } else if (!description){
+            remarks = null
+        }
+        await connection.execute(query, [id, phoneNumber, description, remarks, name, added_at, office_code,]);
+    }
+
+   /*  const values = parsedItems.map((item)=>{
         const {name, phoneNumber, id, remarks, description } = item;
         const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
         console.log('name: ', name,)
         return [id, phoneNumber, description, remarks, name, added_at, office_code,]
-    })
+    }) */
     
    /*  const values = parsedItems.map(item => [batchNumber, item.idnum, item.office_id, item.unit, item.hold_type, item.remarks, item.fines, item.added_at]); */
     
-    await connection.execute(query, values);
-    console.log('success!')
+/*     await connection.execute(query, values);
+    console.log('success!') */
 }
 
 const uploadAndParse = async (filePath) => {
