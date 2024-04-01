@@ -59,37 +59,43 @@ const deleteRecordsByBatchNumber = async (connection, batchNumber) => {
 }; */
 
 const insertDetailRecords = async (connection, parsedItems) => {
-    console.log('hello')
     const office_code = 'MAI0021'
     const query = 'INSERT INTO active_holdlist (stud_id, name, phone_number, description, remarks, office_code, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
 
+    let currentIndex = 0
+
     for (const item of parsedItems){
         let {name, phoneNumber, id, remarks, description } = item;
+       
         const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        if(!name){
-            name = null
+       
+        if (currentIndex + 1 < parsedItems.length && (parsedItems[currentIndex + 1].name === null || parsedItems[currentIndex + 1].name === '' || parsedItems[currentIndex + 1].name === undefined)) {
+            console.log('yo')
+            remarks = `${remarks}, ${parsedItems[currentIndex + 1].remarks} `;
+            console.log('remarks: ', remarks);
+            await connection.execute(query, [id, name, phoneNumber, description, remarks, office_code, added_at]);
+            currentIndex++;
+            continue;
         }
+        if(!name){
+            currentIndex++
+            continue;
+        }
+      
         else if (!id){
             id = null;
         } else if (!remarks){
             remarks = null
         } else if (!description){
             description = null
+        } else if (phoneNumber === 0 || phoneNumber === ''){
+            phoneNumber = 'N/A'
         }
         await connection.execute(query, [id, name, phoneNumber, description, remarks, office_code, added_at]);
+
+        currentIndex++
     }
 
-   /*  const values = parsedItems.map((item)=>{
-        const {name, phoneNumber, id, remarks, description } = item;
-        const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        console.log('name: ', name,)
-        return [id, phoneNumber, description, remarks, name, added_at, office_code,]
-    }) */
-    
-   /*  const values = parsedItems.map(item => [batchNumber, item.idnum, item.office_id, item.unit, item.hold_type, item.remarks, item.fines, item.added_at]); */
-    
-/*     await connection.execute(query, values);
-    console.log('success!') */
 }
 
 const uploadAndParse = async (filePath) => {
@@ -313,7 +319,7 @@ const transformDOCXData = (text) => {
       const assessedFinesMatch = assessedFinesRegex.exec(line);
       const pendingFinesMatch = pendingFinesRegex.exec(line);
       const idMatch = line.match(idRegex);
-  
+
       // Process name, phone number, and ID
       if (phoneMatch || nameMatch || idMatch) {
         // Push the previous record if it has fines information
@@ -322,6 +328,7 @@ const transformDOCXData = (text) => {
           if (assessedFines !== null && pendingFines !== null) {
             currentRecord.remarks += `, Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
           }
+ 
           records.push(currentRecord);
           currentRecord = {}; // Reset record object
           assessedFines = null; // Reset assessed fines
@@ -353,6 +360,8 @@ const transformDOCXData = (text) => {
         currentRecord.description = description
       }
     }
+
+    
   
     // Push the last record if it has fines information
     if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null)) {
@@ -363,9 +372,8 @@ const transformDOCXData = (text) => {
       records.push(currentRecord);
     }
   
-   /*  console.log('records: ', records); */
     return records;
-  };
+};
   
 
 const parseXLSX = (filePath) => {
