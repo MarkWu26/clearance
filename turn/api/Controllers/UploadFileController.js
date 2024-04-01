@@ -74,9 +74,9 @@ const insertDetailRecords = async (connection, parsedItems) => {
         } else if (!remarks){
             remarks = null
         } else if (!description){
-            remarks = null
+            description = null
         }
-        await connection.execute(query, [id, phoneNumber, description, remarks, name, added_at, office_code,]);
+        await connection.execute(query, [id, name, phoneNumber, description, remarks, office_code, added_at]);
     }
 
    /*  const values = parsedItems.map((item)=>{
@@ -95,11 +95,8 @@ const insertDetailRecords = async (connection, parsedItems) => {
 const uploadAndParse = async (filePath) => {
   
     if (!filePath) {
-        console.log('no file!')
         return res.status(400).json({ message: 'No file was uploaded.' });
     }
-
-    console.log('req file: ', filePath )
 
     // Validate file type
     const validTypes = ['text/csv', 'text/xml', 'application/json', 'text/plain', 
@@ -139,6 +136,7 @@ const uploadAndParse = async (filePath) => {
             case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
                 parsedItems = parseXLSX(filePath.path); // For XLSX, pass the file path
                 break;
+                
             default:
                 /* return res.status(400).json({ message: 'Unsupported file type.' }); */
                 return {success: 'false'}
@@ -146,7 +144,6 @@ const uploadAndParse = async (filePath) => {
 
   
         if (parsedItems) {
-            console.log('yey')
             await processAndInsertData(parsedItems);
         } else {
             res.status(400).json({ message: 'No valid data found in file.' });
@@ -298,7 +295,7 @@ const transformDOCXData = (text) => {
     const lines = text.split('\n');
   
     // Regular expressions
-    const nameRegex = /^([A-Z][A-Z\s,.]+?)(?=\s+CO\b(?!4))/;
+    const nameRegex = /^([A-Z][A-Z\s,.-]+?)(?=\s+CO\b(?!4))/;
     const phoneRegex = /CO\s+\d{4}\s+\d{4}\s+(\S+)/g;
     const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]*)/;
     const pendingFinesRegex = /Total Pending Fines:\s+Php([\d.,]*)/;
@@ -338,7 +335,7 @@ const transformDOCXData = (text) => {
         if (phoneMatch) {
           currentRecord.phoneNumber = phoneMatch[1];
         } else {
-          currentRecord.phoneNumber = 0;
+          currentRecord.phoneNumber = 'N/A';
         }
   
         if (idMatch) {
