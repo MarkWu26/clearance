@@ -8,7 +8,22 @@ const getAllClearance = ((req, res) => {
     res.json({message: 'Success!'});
 });
 
+const getActiveHoldlist = (req, res) => {
+    let items = []
+    db.execute('SELECT id, stud_id, name, remarks FROM active_holdlist', (err, data) => {
+
+        if(err){
+            console.log('error: ', err);
+            return res.json({success: false, error: "Database error"})
+        }
+
+        return res.status(200).json(data)
+
+    })
+}
+
 
 module.exports = {
-        getAllClearance
+        getAllClearance,
+        getActiveHoldlist
 }

@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
+import { Student } from "./Types";
 
-type User = {
-  id: number;
-  name: string;
-  email: string;
-};
 
 interface Props {
-  data: User[];
+  data: Student[];
 }
 
 const StudentTable = ({ data }: Props) => {
@@ -18,9 +14,9 @@ const StudentTable = ({ data }: Props) => {
     const searchKey = e.target.value.toLowerCase();
     const newData = data.filter((row) => {
       return (
-        row.id.toString().includes(searchKey) ||
+        row.stud_id.toString().includes(searchKey) ||
         row.name.toLowerCase().includes(searchKey) ||
-        row.email.toLowerCase().includes(searchKey)
+        row.remarks.toLowerCase().includes(searchKey)
       );
     });
     setFilteredData(newData);
@@ -31,9 +27,9 @@ const StudentTable = ({ data }: Props) => {
   }, [data]);
 
   const columns = [
-    { name: "ID", selector: (row: User) => row.id, sortable: true },
-    { name: "Name", selector: (row: User) => row.name, sortable: true },
-    { name: "Email", selector: (row: User) => row.email, sortable: true },
+    { name: "ID", selector: (row: Student) => row.stud_id, sortable: true },
+    { name: "Name", selector: (row: Student) => row.name, sortable: true },
+    { name: "Remarks", selector: (row: Student) => row.remarks, sortable: true },
   ];  
 
   return (

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import StudentTable from "./StudentTable";
 import axios, { AxiosError } from "axios";
+import clearanceService from "../services/clearance.service";
+import { Student } from "./Types";
 
 const StudentClearance = () => {
   type User = {
@@ -10,42 +12,60 @@ const StudentClearance = () => {
   };
 
   const [users, setUsers] = useState<User[]>([]);
-  const [group, setGroup] = useState('');
-  const [sy, setSy] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [group, setGroup] = useState("");
+  const [sy, setSy] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [students, setStudents] = useState<Student[]>([])
 
   const handleGroupChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGroup(event.target.value);
   };
-  
+
   const handleSyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSy(event.target.value);
   };
-  
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
-  
 
   const handleSearch = async () => {
     // Assuming you want to filter the users based on the searchTerm
     // You would have to adjust the URL or query parameters based on your actual API
     try {
-      const response = await axios.get(`https://jsonplaceholder.typicode.com/users?search`, {
-        params: {
-          searchTerm,
-          group,
-          sy,
-        },
-      });
+      const response = await axios.get(
+        `https://jsonplaceholder.typicode.com/users?search`,
+        {
+          params: {
+            searchTerm,
+            group,
+            sy,
+          },
+        }
+      );
       setUsers(response.data);
     } catch (error) {
       console.error(error);
     }
   };
 
+  useEffect(() => {
+    const fetchActiveHoldlist = async () => {
+      try {
+        const response = await clearanceService.getActiveHoldlist();
+        setStudents(response);
+      } catch (error) {
+        console.log("error: ", error);
+      }
+    };
+
+    fetchActiveHoldlist();
+  }, []);
+
+  console.log('students: ', students[1])
+
   return (
-    <>  
+    <>
       <div className="card m-2">
         <div className="card-header">Menu Title</div>
         <div className="card-body">
@@ -55,7 +75,12 @@ const StudentClearance = () => {
           </p>
           <div className="w-100 d-inline-flex justify-content-between align-items-center mb-5">
             <div className="d-inline-flex justify-content-around w-25 h-50">
-              <select className="form-select" name="group" value={group} onChange={handleGroupChange}>
+              <select
+                className="form-select"
+                name="group"
+                value={group}
+                onChange={handleGroupChange}
+              >
                 <option value="" selected disabled>
                   Group
                 </option>
@@ -67,7 +92,12 @@ const StudentClearance = () => {
                 <option value="f">F</option>
                 <option value="g">G</option>
               </select>
-              <select className="form-select ml-auto" name="sy" value={sy} onChange={handleSyChange}>
+              <select
+                className="form-select ml-auto"
+                name="sy"
+                value={sy}
+                onChange={handleSyChange}
+              >
                 <option value="" selected disabled>
                   School Year
                 </option>
@@ -88,7 +118,8 @@ const StudentClearance = () => {
           </div>
 
           <div className="w-100 ext-center">
-            <StudentTable data={users} />
+            <StudentTable data={students} />
+           
           </div>
         </div>
       </div>

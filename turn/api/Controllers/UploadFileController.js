@@ -60,40 +60,79 @@ const deleteRecordsByBatchNumber = async (connection, batchNumber) => {
 
 const insertDetailRecords = async (connection, parsedItems) => {
     const office_code = 'MAI0021'
-    const query = 'INSERT INTO active_holdlist (stud_id, name, phone_number, description, remarks, office_code, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const insertQuery = 'INSERT INTO active_holdlist (stud_id, name, phone_number, description, remarks, office_code, added_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const updateQuery = 'UPDATE active_holdlist SET name = ?, phone_number = ?, description = ?, remarks = ?, added_at = ? WHERE stud_id = ?';
 
     let currentIndex = 0
 
+     // Fetch existing student IDs efficiently
+  const existingStudentIds = new Set(); // Use Set for efficient lookup
+  const existingData = await connection.execute('SELECT stud_id FROM active_holdlist');
+  existingData[0].forEach(row => existingStudentIds.add(row.stud_id)); // Add IDs to Set
+    console.log(existingData)
+   
+
+   console.log('hello:', new Array(...existingStudentIds).join(' '));
+
     for (const item of parsedItems){
         let {name, phoneNumber, id, remarks, description } = item;
-       
         const added_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
-       
-        if (currentIndex + 1 < parsedItems.length && (parsedItems[currentIndex + 1].name === null || parsedItems[currentIndex + 1].name === '' || parsedItems[currentIndex + 1].name === undefined)) {
-            console.log('yo')
-            remarks = `${remarks}, ${parsedItems[currentIndex + 1].remarks} `;
-            console.log('remarks: ', remarks);
-            await connection.execute(query, [id, name, phoneNumber, description, remarks, office_code, added_at]);
-            currentIndex++;
-            continue;
-        }
-        if(!name){
-            currentIndex++
-            continue;
-        }
-      
-        else if (!id){
-            id = null;
-        } else if (!remarks){
-            remarks = null
-        } else if (!description){
-            description = null
-        } else if (phoneNumber === 0 || phoneNumber === ''){
-            phoneNumber = 'N/A'
-        }
-        await connection.execute(query, [id, name, phoneNumber, description, remarks, office_code, added_at]);
 
-        currentIndex++
+        if(existingStudentIds.has(id)){
+            console.log('yooo')
+            if (currentIndex + 1 < parsedItems.length && (parsedItems[currentIndex + 1].name === null || parsedItems[currentIndex + 1].name === '' || parsedItems[currentIndex + 1].name === undefined)) {
+                remarks = `${remarks}, ${parsedItems[currentIndex + 1].remarks} `;
+               
+                await connection.execute(updateQuery, [name, phoneNumber, description, remarks, added_at, id]);
+                currentIndex++;
+                continue;
+            }
+            if(!name){
+                currentIndex++
+                continue;
+            }
+          
+            else if (!id){
+                id = null;
+            } else if (!remarks){
+                remarks = null
+            } else if (!description){
+                description = null
+            } else if (phoneNumber === 0 || phoneNumber === ''){
+                phoneNumber = 'N/A'
+            }
+            await connection.execute(updateQuery, [name, phoneNumber, description, remarks, added_at, id]);
+    
+            currentIndex++
+          
+        } else {
+           
+            if (currentIndex + 1 < parsedItems.length && (parsedItems[currentIndex + 1].name === null || parsedItems[currentIndex + 1].name === '' || parsedItems[currentIndex + 1].name === undefined)) {
+                remarks = `${remarks}, ${parsedItems[currentIndex + 1].remarks} `;
+                await connection.execute(insertQuery, [id, name, phoneNumber, description, remarks, office_code, added_at]);
+                currentIndex++;
+                continue;
+            }
+            if(!name){
+                currentIndex++
+                continue;
+            }
+          
+            else if (!id){
+                id = null;
+            } else if (!remarks){
+                remarks = null
+            } else if (!description){
+                description = null
+            } else if (phoneNumber === 0 || phoneNumber === ''){
+                phoneNumber = 'N/A'
+            }
+            await connection.execute(insertQuery, [id, name, phoneNumber, description, remarks, office_code, added_at]);
+    
+            currentIndex++
+        }
+       
+     
     }
 
 }

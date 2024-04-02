@@ -8,7 +8,7 @@ import ProgressBar from "./ProgressBar";
 const UploadFile = () => {
     const [alertMessage, setAlertMessage] = useState('');
     const [isAlertSuccess, setIsAlertSuccess] = useState(true);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -33,57 +33,78 @@ const UploadFile = () => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragOver(false);
-
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFileChange(e.dataTransfer.files[0]);
-            e.dataTransfer.clearData();
+      
+        if (e.dataTransfer.files) {
+          handleFileChange(e.dataTransfer.files); // Pass the entire FileList
+          e.dataTransfer.clearData();
         }
-    };
+      };
 
-    const handleFileChange = (file: File) => {
+      const handleFileChange = (files: FileList) => {
         const allowedFileTypes = [
-            'text/csv', 'text/xml', 'application/json', 'text/plain',
-            'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          'text/csv', 'text/xml', 'application/json', 'text/plain',
+          'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         ];
-
-        if (!allowedFileTypes.includes(file.type)) {
-            setAlertMessage('File type not allowed. Please select a CSV, XML, JSON, TXT, PDF, DOCX, or XLSX file.');
-            setIsAlertSuccess(false);
-            return;
+      
+        const validFiles: File[] = []; // Initialize as an array of File objects
+      
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (allowedFileTypes.includes(file.type)) {
+            validFiles.push(file);
+          }
         }
-        setSelectedFile(file);
-        handleFileUpload(file);
-    };
-
-    const handleFileUpload = async (file: File) => {
-        if (!file) {
-            setAlertMessage('No file selected!');
-            setIsAlertSuccess(false);
-            return;
+      
+        if (validFiles.length === 0) {
+          setAlertMessage('File types not allowed. Please select CSV, XML, JSON, TXT, PDF, DOCX, or XLSX files.');
+          setIsAlertSuccess(false);
+          return;
         }
-
+      
+        // Directly update state with the original FileList (optional)
+        // setSelectedFiles(files); // If you want to store the entire FileList
+      
+        // Or, update state with the filtered valid files array
+        setSelectedFiles(validFiles);
+      
+        // Handle batch file uploads in handleFileUpload
+        handleFileUpload(validFiles);
+      };
+      
+      const handleFileUpload = async (files: File[]) => { // Update parameter type to File[]
+        if (!files || files.length === 0) {
+          setAlertMessage('No files selected!');
+          setIsAlertSuccess(false);
+          return;
+        }
+      
         try {
+          // Iterate through files and upload them individually
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+      
             // Use axios or your preferred library for file upload
-            const response = await uploadService.uploadFile(file, setUploadProgress);
+            const response = await uploadService.uploadFile(file, setUploadProgress); // Pass individual files
+      
             if (response.success) {
-                console.log('File uploaded and parsed successfully');
-
-                setAlertMessage('File uploaded and parsed successfully');
-                setIsAlertSuccess(true);
-                setUploadProgress(0);
+              console.log(`File "${file.name}" uploaded and parsed successfully`);
+            } else {
+              console.error(`Error uploading file "${file.name}":`, response.error);
+              // Handle specific error messages for failed uploads (optional)
             }
+          }
+      
+          setAlertMessage(`${files.length} files uploaded.`);
+          setIsAlertSuccess(true);
+          setUploadProgress(0);
         } catch (error) {
-            console.error('Error during file upload and parsing', error);
-
-            // Log event (simulated)
-            console.log('File upload and parse failed', error);
-
-            setAlertMessage('Error during file upload and parsing');
-            setIsAlertSuccess(false);
-            setUploadProgress(0);
+          console.error('Error during file uploads:', error);
+          setAlertMessage('Error during file uploads.');
+          setIsAlertSuccess(false);
+          setUploadProgress(0);
         }
-    };
+      };
 
     return (
         <>
@@ -118,10 +139,11 @@ const UploadFile = () => {
                         <input
                             type="file"
                             id="hiddenFileInput"
+                            multiple
                             style={{ display: "none" }}
                             onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                    handleFileChange(e.target.files[0]);
+                                if (e.target.files) {
+                                    handleFileChange(e.target.files);
                                 }
                             }}
                         />

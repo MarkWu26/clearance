@@ -69,3 +69,9 @@ export type Unit = {
     onRight: string
   }
 
+  export type Student = {
+    id: string,
+    name: string,
+    remarks: string,
+    stud_id: string
+  }

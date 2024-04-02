@@ -77,10 +77,10 @@ router.get('/uploaded-files', async (req, res) => {
 
 // Correct route setup in your server code
 router.post('/upload-and-parse', upload.array('file', 5), validateMimeTypes, async(req,res) => {
+  console.log('request files: ', req.files)
   try {
     for (let file of req.files) {
       await UploadFileController.uploadAndParse(file);
-      
     }
     res.json({
       success: true,
