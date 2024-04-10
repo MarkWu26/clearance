@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-import { Student } from "./Types";
+import { StudentClearanceStatus } from "./Types";
 
 
 interface Props {
-  data: Student[];
+  data: StudentClearanceStatus[];
 }
 
 const StudentTable = ({ data }: Props) => {
@@ -16,7 +16,9 @@ const StudentTable = ({ data }: Props) => {
       return (
         row.stud_id.toString().includes(searchKey) ||
         row.name.toLowerCase().includes(searchKey) ||
-        row.remarks.toLowerCase().includes(searchKey)
+        row.remarks.toLowerCase().includes(searchKey) ||
+        row.description.toLowerCase().includes(searchKey) ||
+        row.year.toLowerCase().includes(searchKey)
       );
     });
     setFilteredData(newData);
@@ -27,9 +29,11 @@ const StudentTable = ({ data }: Props) => {
   }, [data]);
 
   const columns = [
-    { name: "ID", selector: (row: Student) => row.stud_id, sortable: true },
-    { name: "Name", selector: (row: Student) => row.name, sortable: true },
-    { name: "Remarks", selector: (row: Student) => row.remarks, sortable: true },
+    { name: "ID", selector: (row: StudentClearanceStatus) => row.stud_id, sortable: true },
+    { name: "Name", selector: (row: StudentClearanceStatus) => row.name, sortable: true },
+    { name: "Remarks", selector: (row: StudentClearanceStatus) => row.remarks, sortable: true },
+    {name: "Description", selector: (row: StudentClearanceStatus) => row.description, sortable: true},
+    {name: "School Year", selector: (row: StudentClearanceStatus) => row.year, sortable: true},
   ];  
 
   return (

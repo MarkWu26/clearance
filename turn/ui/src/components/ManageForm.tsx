@@ -97,20 +97,19 @@ const ManageForms = () => {
     const handleFetch = async () => {
       try {
         const res = await formService.getAllForms();
-
-        console.log('resposne: ', res)
         
         if (res.code) {
           setErrors(res.message);
         }
         
         setForms(res);
-      } catch (err) {
+      } catch (err: any) {
         showAlert(err, false);
       }
     };
   
     handleFetch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updated]);
   
   

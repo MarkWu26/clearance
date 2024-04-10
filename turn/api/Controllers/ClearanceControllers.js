@@ -10,7 +10,7 @@ const getAllClearance = ((req, res) => {
 
 const getActiveHoldlist = (req, res) => {
     let items = []
-    db.execute('SELECT id, stud_id, name, remarks FROM active_holdlist', (err, data) => {
+    db.execute('SELECT id, stud_id, name, remarks, description, year FROM active_holdlist', (err, data) => {
 
         if(err){
             console.log('error: ', err);

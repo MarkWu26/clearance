@@ -4,6 +4,7 @@ import upload from "/upload-file.png";
 import uploadService from "../services/upload.service";
 import AlertBox from "./Alert";
 import ProgressBar from "./ProgressBar";
+import { useNavigate } from "react-router-dom";
 
 const UploadFile = () => {
     const [alertMessage, setAlertMessage] = useState('');
@@ -11,6 +12,7 @@ const UploadFile = () => {
     const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const navigate = useNavigate()
 
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -81,23 +83,35 @@ const UploadFile = () => {
       
         try {
           // Iterate through files and upload them individually
+          let isSuccess = false
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
       
             // Use axios or your preferred library for file upload
             const response = await uploadService.uploadFile(file, setUploadProgress); // Pass individual files
-      
+          
+            
             if (response.success) {
-              console.log(`File "${file.name}" uploaded and parsed successfully`);
+              
+              setAlertMessage(`${files.length} files uploaded, you may now check the updated student clearance!`);
+              setIsAlertSuccess(true);
+              isSuccess = true
             } else {
-              console.error(`Error uploading file "${file.name}":`, response.error);
-              // Handle specific error messages for failed uploads (optional)
+              setAlertMessage(response.message || 'No valid data found, please try again.');
+              setIsAlertSuccess(false);
             }
           }
-      
-          setAlertMessage(`${files.length} files uploaded.`);
-          setIsAlertSuccess(true);
+
           setUploadProgress(0);
+
+          if(isSuccess){
+            setTimeout(()=>{
+              navigate('/studentClearance');
+            }, 2500)
+           
+          }
+      
+         
         } catch (error) {
           console.error('Error during file uploads:', error);
           setAlertMessage('Error during file uploads.');

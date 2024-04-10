@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import StudentTable from "./StudentTable";
 import axios, { AxiosError } from "axios";
 import clearanceService from "../services/clearance.service";
-import { Student } from "./Types";
+import { StudentClearanceStatus } from "./Types";
 
 const StudentClearance = () => {
   type User = {
@@ -15,7 +15,7 @@ const StudentClearance = () => {
   const [group, setGroup] = useState("");
   const [sy, setSy] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [students, setStudents] = useState<Student[]>([])
+  const [students, setStudents] = useState<StudentClearanceStatus[]>([])
 
   const handleGroupChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setGroup(event.target.value);
@@ -71,9 +71,9 @@ const StudentClearance = () => {
         <div className="card-body">
           <h5 className="card-title">Search Student Clearance</h5>
           <p className="card-text">
-            Search student clearance by ID number, name or course.
+            Search student clearance by ID number or name.
           </p>
-          <div className="w-100 d-inline-flex justify-content-between align-items-center mb-5">
+        {/*   <div className="w-100 d-inline-flex justify-content-between align-items-center mb-5">
             <div className="d-inline-flex justify-content-around w-25 h-50">
               <select
                 className="form-select"
@@ -115,7 +115,7 @@ const StudentClearance = () => {
                 Show Records
               </button>
             </div>
-          </div>
+          </div> */}
 
           <div className="w-100 ext-center">
             <StudentTable data={students} />

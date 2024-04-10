@@ -39,7 +39,44 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
   const [usersUnit, setUsersUnit] = useState(selectedUser?.unit_id.toString() ?? "");
   const [usersRight, setUsersRight] = useState(selectedUser?.rights ?? "");
 
-  console.log('selected user unit: ', selectedUser?.unit_id)
+  const rightsOptions = [
+    {
+      label: 'All',
+      value: 'manage_units,manage_units,manage_users,manage_offices,manage_form,manage_gnpn,view_clearance,upload_file,hold_all'
+    },
+    {
+      label: 'Manage Units',
+      value: 'manage_units'
+    },
+    {
+      label: 'Manage Users',
+      value: 'manage_users'
+    },
+    {
+      label: 'Manage Offices',
+      value: 'manage_offices'
+    },
+    {
+      label: 'Manage Forms',
+      value: 'manage_form'
+    },
+    {
+      label: 'Manage GNPN',
+      value: 'manage_gnpn'
+    },
+    {
+      label: 'View Clearance',
+      value: 'view_clearance'
+    },
+    {
+      label: 'Upload File',
+      value: 'upload_file'
+    },
+    {
+      label: 'Hold All',
+      value: 'hold_all'
+    },
+  ]
  
 
   useEffect(() => {
@@ -81,6 +118,9 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
 
 
   const [customErrors, setCustomErrors] = useState<Err[]>();
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  console.log('selected: ', selectedOptions)
 
   const onSubmit = handleSubmit(async (data) => {
     console.log('Form submitted', data);
@@ -138,8 +178,27 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     }
   });
   
-  const watchunit = watch('unit')
-  console.log('watch unit: ', watchunit)
+  const handleCheckboxChange = (label: string, value: string) => {
+    if (label === 'All') {
+      const allRightsValues = rightsOptions
+        .filter((option) => option.label !== 'All')
+        .map((option) => option.value);
+      setSelectedOptions(selectAll ? [] : allRightsValues);
+      setSelectAll(!selectAll);
+    } else {
+      if (selectedOptions.includes(value)) {
+        setSelectedOptions(selectedOptions.filter((option) => option !== value));
+        if (selectAll) {
+          setSelectAll(false);
+        }
+      } else {
+        setSelectedOptions([...selectedOptions, value]);
+        if (selectedOptions.length + 1 === rightsOptions.length - 1) {
+          setSelectAll(true);
+        }
+      }
+    }
+  };
 
 
   return (
@@ -255,7 +314,20 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
             )}
 
             <label className="form-label frm-label">Rights</label>
-            <select
+            {rightsOptions.map((rights)=> (
+              <div key={rights.value}>
+                <input
+                type="checkbox"
+                id={rights.value}
+                value={rights.value}
+                checked={rights.label === 'All' ? selectAll : selectedOptions.includes(rights.value)}
+                onChange={()=>handleCheckboxChange(rights.label, rights.value)}
+                />
+                 <label htmlFor={rights.value}>{rights.label}</label>
+              </div>
+             
+            ))}
+           {/*  <select
               {...register("rights")}
               className="form-select mb-2 poppins-reg"
               id="rights"
@@ -301,12 +373,12 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
                       hold_all
                     </option>
             </select>
-
-            {errors.rights && (
+ */}
+           {/*  {errors.rights && (
               <p key="rights_err" className="text-danger">
                 {errors.rights.message}
               </p>
-            )}
+            )} */}
       
             
           </form>

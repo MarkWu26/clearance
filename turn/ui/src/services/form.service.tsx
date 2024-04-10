@@ -34,21 +34,9 @@ const deleteForm = async (id: string): Promise<ApiResponse> => {
   }
 };
 
-const editForm = async (
-  id: string,
-  unit: string,
-  officeName: string,
-  officeAbbrev: string,
-  group: string
-): Promise<ApiResponse> => {
+const editForm = async (id: string, unit: string, officeName: string, officeAbbrev: string, group: string): Promise<ApiResponse> => {
   try {
-    const response: AxiosResponse<ApiResponse> = await axios.put(`${API_URL}/forms/edit/${id}`, {
-      unit,
-      officeName,
-      officeAbbrev,
-      group,
-    });
-    console.log(response.data);
+    const response: AxiosResponse<ApiResponse> = await axios.put(`${API_URL}/forms/edit/${id}`, {unit, officeName,officeAbbrev, group,});
     return response.data;
   } catch (error: any) {
     console.error("Edit Form Error:", error);
@@ -70,11 +58,11 @@ const getForms = async (id?: string): Promise<ClearanceFrm[]> => {
 
 const getAllForms = async () => {
   try {
-    const response: AxiosResponse<ApiResponse> = await axios.get(API_URL);
+    const response = await axios.get(API_URL);
     return response.data;
   } catch (error: any) {
     console.error("Get All forms Error:", error);
-    return { success: false, error: error.message || "Unknown error" };
+    return error;
   }
 }
 

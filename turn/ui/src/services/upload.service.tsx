@@ -63,7 +63,15 @@ const uploadFile = async (
 
   try {
  /*    const response = await axios.post(`${API_URL}/upload`, formData, config); */
+ console.log('helloo')
     const response = await axios.post(`${API_URL}/upload-and-parse`, formData, config);
+    console.log('respo: ', response)
+    if(!response.data.success){
+      return {
+        success: false,
+        message: response.data.message
+      };
+    }
     return {
       success: true,
       message: "File uploaded and parsed successfully",
@@ -71,6 +79,7 @@ const uploadFile = async (
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.log('error message: ', error)
       const serverMessage = error.response?.data?.message || "Unknown server error";
       const statusCode = error.response?.status;
       console.error(`Error uploading file: ${serverMessage} (Status code: ${statusCode})`);
