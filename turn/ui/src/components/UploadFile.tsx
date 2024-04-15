@@ -107,7 +107,7 @@ const UploadFile = () => {
           if(isSuccess){
             setTimeout(()=>{
               navigate('/studentClearance');
-            }, 2500)
+            }, 1500)
            
           }
       

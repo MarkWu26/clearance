@@ -319,7 +319,7 @@ const parseData = (text) => {
   const records = [];
   const lines = text.split("\n");
   // Regular expressions
-  const nameRegex = /^([A-Z][A-Z\s,.-]+?)(?=\s+CO\b(?!4))/;
+  const nameRegex = /^([A-Z][A-Z\s,.-]+?)(?=\s+([A-Z]{2,3}\s+\d{4}\s+\d{4})\b(?!4))/;
   const phoneRegex = /[A-Z]{2,3}\s+\d{4}\s+\d{4}\s+(\S+)/g;
   const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]*)/;
   const pendingFinesRegex = /Total Pending Fines:\s+Php\s*([\d.,]+)/;
