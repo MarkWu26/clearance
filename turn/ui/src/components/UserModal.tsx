@@ -9,13 +9,13 @@ import { User, Unit, UserType } from "./Types";
 import userService from "../services/user.service";
 import unitService from "../services/unit.service";
 
-const schema = z.object({
-  username: z.string().nonempty("Username is required"),
-  password: z.string().nonempty("Password is required"),
-  type: z.string().nonempty("Type is required"),
-  unit: z.string().nonempty("Unit name is required"),
-  rights: z.string().nonempty("Rights is required"),
-});
+  const schema = z.object({
+    username: z.string().nonempty("Username is required"),
+    password: z.string().nonempty("Password is required"),
+    type: z.string().nonempty("Type is required"),
+    unit: z.string().nonempty("Unit name is required"),
+    rights: z.array(z.string()).nonempty('Rights is required')
+  });
 
 interface Props {
   show: boolean;
@@ -29,7 +29,7 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     msg?: string;
   };
 
-  console.log('selected user: ', selectedUser)
+
   const [list, setList] = useState([]);
   const [unitList, setUnitList] = useState<Unit[]>();
   const [typeList, setTypeList] = useState<UserType[]>()
@@ -38,11 +38,13 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
   const [usersType, setUsersType] = useState(selectedUser?.type_id.toString() ?? "");
   const [usersUnit, setUsersUnit] = useState(selectedUser?.unit_id.toString() ?? "");
   const [usersRight, setUsersRight] = useState(selectedUser?.rights ?? "");
+  const [selectedRights, setSelectedRights] = useState<string[]>(selectedUser?.rights.split(',') || []);
+  console.log('users right: ', selectedRights)
 
   const rightsOptions = [
     {
       label: 'All',
-      value: 'manage_units,manage_units,manage_users,manage_offices,manage_form,manage_gnpn,view_clearance,upload_file,hold_all'
+      value: 'manage_units,manage_users,manage_offices,manage_form,manage_gnpn,view_clearance,upload_file,hold_all'
     },
     {
       label: 'Manage Units',
@@ -109,18 +111,19 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
     handleSubmit,
     formState: { errors },
     reset,
-    watch
+
   } = useForm<UserFormData>({ resolver: zodResolver(schema), defaultValues: {
     username: userName,
     type: usersType,
-    unit: usersUnit
+    unit: usersUnit,
+    rights: []
   } });
 
 
+
   const [customErrors, setCustomErrors] = useState<Err[]>();
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+ 
   const [selectAll, setSelectAll] = useState(false);
-  console.log('selected: ', selectedOptions)
 
   const onSubmit = handleSubmit(async (data) => {
     console.log('Form submitted', data);
@@ -135,7 +138,7 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
           data.password,
           data.unit,
           data.type,
-          data.rights
+          selectedRights.join(',')
         ).then(
           (res) => {
             if (res.success === true) {
@@ -155,7 +158,7 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
       } else {
         // Create user
         console.log('data type: ', data.type)
-        await userService.registerUser(data.username, data.password, data.unit, data.type, data.rights).then(
+        await userService.registerUser(data.username, data.password, data.unit, data.type, selectedRights.join(',')).then(
           (res) => {
             if (res.success === true) {
               setAlert("User created", true);
@@ -177,23 +180,30 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
       console.error(err);
     }
   });
+
+  console.log('all: ', rightsOptions[0].value.split(','))
   
   const handleCheckboxChange = (label: string, value: string) => {
     if (label === 'All') {
       const allRightsValues = rightsOptions
         .filter((option) => option.label !== 'All')
         .map((option) => option.value);
-      setSelectedOptions(selectAll ? [] : allRightsValues);
+      setSelectedRights(selectAll ? [] : allRightsValues);
       setSelectAll(!selectAll);
     } else {
-      if (selectedOptions.includes(value)) {
-        setSelectedOptions(selectedOptions.filter((option) => option !== value));
+      if (selectedRights.includes(value)) {
+        console.log('true')
+        setSelectedRights(selectedRights.filter((option) => option !== value));
         if (selectAll) {
           setSelectAll(false);
         }
       } else {
-        setSelectedOptions([...selectedOptions, value]);
-        if (selectedOptions.length + 1 === rightsOptions.length - 1) {
+  
+        setSelectedRights([...selectedRights, value]);
+        if(selectedRights.includes(value)){
+            setSelectedRights(selectedRights.filter((option) => option !== value));
+        }
+        if (selectedRights.length + 1 === rightsOptions.length - 1) {
           setSelectAll(true);
         }
       }
@@ -313,20 +323,52 @@ const UsersModal = ({ show, setClose, setAlert, selectedUser }: Props) => {
               </p>
             )}
 
-            <label className="form-label frm-label">Rights</label>
-            {rightsOptions.map((rights)=> (
-              <div key={rights.value}>
-                <input
+  <div className="row">
+  <label className="form-label frm-label">Rights</label>
+        <div className="col-md-6">
+        
+          {rightsOptions.slice(0, 5).map((rights) => (
+            <div key={rights.value} className="mb-2"> {/* Add margin bottom */}
+            <div className="form-check"> {/* Use form-check class for Bootstrap checkbox */}
+              <input
+                {...register('rights')}
                 type="checkbox"
-                id={rights.value}
+                id="rights"
                 value={rights.value}
-                checked={rights.label === 'All' ? selectAll : selectedOptions.includes(rights.value)}
-                onChange={()=>handleCheckboxChange(rights.label, rights.value)}
-                />
-                 <label htmlFor={rights.value}>{rights.label}</label>
-              </div>
-             
-            ))}
+                checked={selectedRights.join(',') === rightsOptions[0].value ? true : rights.label === 'All' ? selectAll : selectedRights.includes(rights.value)}
+                onChange={() => handleCheckboxChange(rights.label, rights.value)}
+                className="form-check-input"
+              />
+              <label htmlFor={rights.value} className="form-check-label">{rights.label}</label> 
+            </div>
+          </div>
+          ))}
+        </div>
+      <div className="col-md-6">
+       
+        {rightsOptions.slice(5).map((rights) => (
+        <div key={rights.value} className="mb-2"> {/* Add margin bottom */}
+        <div className="form-check"> {/* Use form-check class for Bootstrap checkbox */}
+          <input
+           {...register("rights")}
+            type="checkbox"
+            id="rights"
+            value={rights.value}
+            checked={selectedRights === rightsOptions[0].value.split(',') ? true : rights.label === 'All' ? selectAll : selectedRights.includes(rights.value)}
+            onChange={() => handleCheckboxChange(rights.label, rights.value)}
+            className="form-check-input"
+          />
+          <label htmlFor={rights.value} className="form-check-label">{rights.label}</label> 
+        </div>
+      </div>
+        ))}
+      </div>
+      {errors.rights && (
+              <p key="rights_err" className="text-danger">
+                Rights is required
+              </p>
+            )}
+    </div>
            {/*  <select
               {...register("rights")}
               className="form-select mb-2 poppins-reg"

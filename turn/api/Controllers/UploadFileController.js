@@ -89,7 +89,7 @@ const insertDetailRecords = async (connection, parsedItems) => {
         currentIndex++;
         continue;
       }
-      if (!name) {
+      if (!name || !remarks) {
         currentIndex++;
         continue;
       } else if (phoneNumber === 0 || phoneNumber === "") {
@@ -110,7 +110,7 @@ const insertDetailRecords = async (connection, parsedItems) => {
         currentIndex++;
         continue;
       }
-      if (!name) {
+      if (!name || !remarks) {
         currentIndex++;
         continue;
       } else if (phoneNumber === 0 || phoneNumber === "") {
@@ -272,7 +272,7 @@ const transformJsonData = (json) => {
 const parsePDF = async (filePath) => {
   try {
     const data = await pdfParse(filePath);
-    return transformPDFData(data.text);
+    return parseData(data.text);
   } catch (error) {
     console.error("Error parsing PDF:", error);
     return [];
@@ -283,7 +283,7 @@ const transformPDFData = (text) => {
   const items = [];
   const lines = text.split("\n");
   for (let line of lines) {
-    const [idnum, officeId, unit, holdType, remarks, fines] = line.split(",");
+   /*  const [idnum, officeId, unit, holdType, remarks, fines] = line.split(",");
     items.push({
       idnum: idnum.trim(),
       office_id: parseInt(officeId.trim(), 10),
@@ -292,7 +292,8 @@ const transformPDFData = (text) => {
       remarks: remarks.trim(),
       fines: parseFloat(fines.trim()),
       added_at: new Date(),
-    });
+    }); */
+    console.log('line: ', line)
   }
   return items;
 };
@@ -321,20 +322,18 @@ const parseData = (text) => {
   const nameRegex = /^([A-Z][A-Z\s,.-]+?)(?=\s+CO\b(?!4))/;
   const phoneRegex = /[A-Z]{2,3}\s+\d{4}\s+\d{4}\s+(\S+)/g;
   const assessedFinesRegex = /Total Assessed Fines:\s+Php([\d.,]*)/;
-  const pendingFinesRegex = /Total Pending Fines:\s+Php([\d.,]*)/;
+  const pendingFinesRegex = /Total Pending Fines:\s+Php\s*([\d.,]+)/;
   const idRegex = /([A-Z]{2,3}\s+\d{4}\s+\d{4})/;
   const yearRegex = /SY (\d{4}-\d{4})/;
-  if (!lines[6]) {
-    return false;
-  }
-  const description = lines[6].trim() || "";
+ 
+  let description = '';
 
   let currentRecord = {};
   let assessedFines = null; // Variable to store assessed fines amount
   let pendingFines = null; // Variable to store pending fines amount
   let year = null;
   let isValid = false;
-
+  
   for (let line of lines) {
     //check if the document is legit
     if (line.trim().includes("Ateneo de Zamboanga University")) {
@@ -348,17 +347,24 @@ const parseData = (text) => {
     const idMatch = line.match(idRegex);
     const yearMatch = line.match(yearRegex)
   
-    if(yearMatch){
-        year = yearMatch[1]
+    if (yearMatch) {
+      year = yearMatch[1]; // Extract school year
+      // Check the previous line for description
+      let lastIndex = lines.indexOf(line) - 1;
+      if(lines[lastIndex].trim() === ''){
+        lastIndex = lines.indexOf(line) - 2;
+          description = lines[lastIndex].trim();
+      } else {
+        if (lastIndex < lines.length) {
+          description = lines[lastIndex].trim();
+        }
+      }
     }
 
     // Process name, phone number, and ID
     if (phoneMatch || nameMatch || idMatch) {
       // Push the previous record if it has fines information
-      if (
-        Object.keys(currentRecord).length > 0 &&
-        (assessedFines !== null || pendingFines !== null)
-      ) {
+      if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null)) {
         currentRecord.remarks =
           assessedFines !== null
             ? `Total Assessed Fines: ${parseFloat(assessedFines.replace(",", ""))}`
@@ -398,18 +404,17 @@ const parseData = (text) => {
       currentRecord.description = description;
        currentRecord.year =  year || ''
     }
+
   }
 
   // Push the last record if it has fines information
-  if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null)) {
+  if (Object.keys(currentRecord).length > 0 && (assessedFines !== null || pendingFines !== null || assessedFines !== '' || pendingFines !== '')) {
     currentRecord.remarks =
       assessedFines !== null
         ? `Total Assessed Fines: ${parseFloat(assessedFines.replace(",", ""))}`
         : `Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
     if (assessedFines !== null && pendingFines !== null) {
-      currentRecord.remarks += `, Total Pending Fines: ${parseFloat(
-        pendingFines.replace(",", "")
-      )}`;
+      currentRecord.remarks += `, Total Pending Fines: ${parseFloat(pendingFines.replace(",", ""))}`;
     }
     records.push(currentRecord);
   }
