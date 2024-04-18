@@ -34,18 +34,30 @@ const ManageForms = () => {
     {
       name: "Groups",
       selector: (row: ClearanceFrm) => row.group,
+     
     },
     
     
     {
       name: "Action",
       button: true,
+      width: "15%",
       cell: (row: ClearanceFrm) => (
         <>
+         <button
+            className="btn bg-primary me-2"
+            title="View"
+            onClick={() => handleView(row)}
+            style={{
+              color: "white",
+            }}
+          >
+            <i className="bi bi-eye"></i>
+          </button>
           <button
             className="btn"
             title="Edit"
-            onClick={() => handleEdit(row)}
+            onClick={() => editModal(row)}
             style={{
               backgroundColor: "var(--or-edit)",
               color: "white",
@@ -89,9 +101,10 @@ const ManageForms = () => {
     }
   };
 
-  const handleEdit = (selectedForm: ClearanceFrm) => {
+  const handleView = (selectedForm: ClearanceFrm) => {
     navigate(`/clearanceform/${selectedForm.id}`);
   };
+
 
   useEffect(() => {
     const handleFetch = async () => {
@@ -116,6 +129,13 @@ const ManageForms = () => {
   const openModal = () => {
     setShowModal(true);
   };
+
+  
+  const editModal = (selectedForm: ClearanceFrm) => {
+    console.log(selectedForm)
+    setForm(selectedForm);
+    setShowModal(true);
+  }
 
   const closeModal = () => {
     setShowModal(false);
@@ -148,12 +168,12 @@ const ManageForms = () => {
           <div className="d-inline-flex justify-content-between align-items-center mb-3">
             <div className="d-inline-flex justify-content-start h-20">
               <button className="btn btn-primary" onClick={openModal}>
-                Add Form <i className="bi bi-person-plus"></i>
+                Add Form <i className="bi bi-plus-square ms-2 "></i>
               </button>
             </div>
           </div>
 
-          <div className="w-100 text-center">
+          <div className="w-100">
             <ClearanceForm data={forms} columns={columns} />
           </div>
         </div>
@@ -167,6 +187,8 @@ const ManageForms = () => {
           selectedForm={form}
         />
       )}
+
+      {alert}
     </>
   );
 };

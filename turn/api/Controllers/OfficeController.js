@@ -1,7 +1,8 @@
 const db = require('../utils/db');
 const opsdb = require('../utils/opsdb');
 const { validationResult } = require('express-validator');
-const helper = require('../services/helper')
+const helper = require('../services/helper');
+const axios = require('axios');
 
 const createOffice = async (req, res) => {
 
@@ -122,33 +123,20 @@ const updateOffice = async (req, res) => {
    
 };
 
-const getOfficesAvailable = (req, res) => {
+const getOfficesAvailable = async (req, res) => {
 
-    
-    // if(!errors.isEmpty()){
-    //     return res.status(400).json({ success: false,
-    //         errors: errors.array(),
-    //     });
-    // }
-    let offices = [];
-    
-    
-    opsdb.execute('SELECT office from p_office ORDER BY office ASC', [],  (err, data) => {
-
-        if(err){
-            console.log(err)
-            return res.json({success: false, error: "Database error"});
-        }
-     
-            for (i = 0; i < data.length; i++){
-               
-                offices.push(data[i].office.trim());
+    try {
+        //change url to hosturl in live prod
+        const response = await axios.get('http://localhost:3500/offices', {
+            headers: {
+                authorization: process.env.OPS_API_AUTH_TOKEN
             }
-         
-            return res.status(200).json(offices);  
-   
-    });
-   
+           });
+
+        return res.status(200).json(response.data);   
+    } catch (error) {
+        console.log('error: ', error)
+    }
 };
 
 const getClearingOffices = (req, res) => {

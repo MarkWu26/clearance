@@ -27,10 +27,13 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
     
     const [unitList, setUnitList] = useState<Unit[] | undefined>([]);
     const [chosenOffice, setChosenOffice] = useState(selectedForm?.officeName ?? "");
-    const [chosenUnit, setChosenUnit] = useState(selectedForm?.unit)
+    const [chosenUnit, setChosenUnit] = useState(selectedForm?.unit);
     const [abbrevChosen, setAbbrevChosen] = useState(selectedForm?.officeAbbrev ?? "");
     const [groupChosen, setGroupChosen] = useState(selectedForm?.group ?? "");
+    const [chosenGroupId, setChosenGroupId] = useState(selectedForm?.groupId ?? "")
     const [groups, setGroups] = useState<clearanceGroups [] | undefined>([])
+
+    console.log('group chosen: ', selectedForm)
  
     useEffect(() => {
       const fetchData = async () => {
@@ -41,6 +44,8 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
           setGroups(groups)
           setList(offices);
           setUnitList(units);
+          const response = await formService.getForms(selectedForm?.id);
+          setChosenUnit(response[0].unit)
         } catch (error) {
           console.error("Error fetching data:", error);
         }
@@ -48,6 +53,8 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
   
       fetchData();
     }, []);
+
+    console.log('chosen unit: ', chosenUnit)
 
     const schema = z.object({
         officeName: z
@@ -76,13 +83,19 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<ClearanceFrm>({ resolver: zodResolver(schema) });
+    } = useForm<ClearanceFrm>({ resolver: zodResolver(schema), defaultValues:{
+      unit: selectedForm?.unitId,
+      officeAbbrev: abbrevChosen,
+      officeName: chosenOffice,
+      group: chosenGroupId
+    } });
     const [customErrors, setCustomErrors] = useState<Err[]>();
 
     const onSubmit = handleSubmit(async (data) => {
       try {
         if (selectedForm) {
           // edit
+          console.log('unit: ', data.unit);
           const res = await formService.editForm(
             selectedForm.id,
             data.unit,
@@ -91,7 +104,7 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
             data.group
           );
             // setAlert();
-            console.log(res.success)
+            console.log('success: ', res.success)
             if (res.success === true) {
               setAlert("Form edited", true);
             } else {
@@ -150,14 +163,18 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
                     setCustomErrors([]);
                   }}
                   
-                  value = {chosenUnit}
+                  value={chosenUnit}
                 >
-                  {selectedForm ? "" : (
-                    <option value="" disabled>
+                  {selectedForm ? (
+                    <option value={selectedForm.groupId} selected >
+                      {selectedForm.unit}
+                    </option>
+                    ) : (
+                    <option selected value="" disabled>
                       Choose Unit
                     </option>
                   )}
-                  <option value="0">ALL</option>
+                 
                   {unitList?.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name + ` (${u.desc})`}
@@ -233,7 +250,9 @@ const FormModal = ({ show, setClose, setAlert, selectedForm }: Props) => {
                   
                   value={ groupChosen }
                 >
-                  {selectedForm ? "" : (
+                  {selectedForm ? (
+                    <option value={chosenGroupId}>{groupChosen}</option>
+                  ) : (
                     <option value="" disabled>
                       Choose Group
                     </option>

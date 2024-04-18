@@ -29,9 +29,9 @@ const ClearanceForm = ({ data, columns }: Props) => {
   }, [data]);
  
   const [rows, setRows] = useState(data);
-  useEffect(() => {
+  /* useEffect(() => {
     
-  }, [rows]);
+  }, [rows]); */
   return (
     <>
       <div className="d-inline-flex justify-content-end">

@@ -40,22 +40,25 @@ const createForm = (req, res) => {
 const getAllForms = (req, res) => {
 try {
     let forms = []
-    db.execute('SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id', (err, data) => {
+    db.execute('SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit, form.clearance_group_id AS groupId FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id', (err, data) => {
         if (err) {
             console.error('Get Forms Error:', err);
             return res.status(500).json({ success: false, error: 'Failed to get forms' });
         }
 
         for (let i = 0; i < data.length; i++) {
+            console.log('data: ', data[i])
             forms.push({
                 id: data[i].id,
                 unit: data[i].unit,
                 officeName: helper.decodeHtml(data[i].officeName),
                 officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
                 group: helper.decodeHtml(data[i].groupName),
+                groupId:helper.decodeHtml(data[i].groupId), 
             });
         }
 
+       
         return res.status(200).json(forms);
     });
 } catch (error) {
@@ -72,22 +75,27 @@ const getForms = async (req, res) => {
         let forms = [];
 
         if(formId){
-            db.execute(`SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit, form.unit AS form_unitId FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id WHERE form.id = ${formId}`, (err, data) => {
+            db.execute(`SELECT form.id, officeAbbrev, name AS groupName, officeName, units.description AS unit, units.abbrev AS unit_abbrev, form.unit AS form_unitId, form.clearance_group_id AS groupId FROM clearance_frm as form LEFT JOIN groups on form.clearance_group_id = groups.clearance_group_id LEFT JOIN units on form.unit = units.id WHERE form.id = ${formId}`, (err, data) => {
                 if (err) {
                     console.error('Get Forms Error:', err);
                     return res.status(500).json({ success: false, error: 'Failed to get forms' });
                 }
     
                 for (let i = 0; i < data.length; i++) {
+                    console.log('data: ', data[i])
                     forms.push({
                         id: data[i].id,
-                        unit: data[i].unit,
+                        unit: `${data[i].unit_abbrev} (${data[i].unit})`,
                         officeName: helper.decodeHtml(data[i].officeName),
                         officeAbbrev: helper.decodeHtml(data[i].officeAbbrev),
                         group: helper.decodeHtml(data[i].groupName),
-                        unitId: data[i].form_unitId
+                        unitId: data[i].form_unitId,
+                        groupId: data[i].groupId
+
                     });
                 }
+
+                console.log('forms; ', forms)
     
                 return res.status(200).json(forms);
             });
@@ -150,7 +158,8 @@ const deleteForm = (req, res) => {
 };
 
 const updateForm = (req, res) => {
-    const { id, unit, officeName, office_id, officeAbbrev, group } = req.body;
+    const id = req.params.id;
+    const { unit, officeName, office_id, officeAbbrev, group } = req.body;
 
     // Check validation errors
     const errors = validationResult(req);
@@ -169,8 +178,10 @@ const updateForm = (req, res) => {
     const sanitizedOfficeAbbrev = officeAbbrev || '';
     const sanitizedGroup = group || '';
 
+    console.log('executing')
+
     db.execute(
-        'UPDATE clearance_frm SET unit = ?, officeName = ?, office_id = ?, officeAbbrev = ?, `group` = ? WHERE id = ?',
+        'UPDATE clearance_frm SET unit = ?, officeName = ?, office_id = ?, officeAbbrev = ?, `clearance_group_id` = ? WHERE id = ?',
         [String(sanitizedUnit), sanitizedOfficeName, sanitizedOfficeId, sanitizedOfficeAbbrev, sanitizedGroup, sanitizedId],
         (err, data) => {
             if (err) {

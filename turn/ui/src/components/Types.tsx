@@ -8,6 +8,7 @@ export type ClearanceFrm = {
   abbrev?: string;
   type?: string;
   unitId?: string;
+  groupId?: string;
 };
 
 export type Unit = {

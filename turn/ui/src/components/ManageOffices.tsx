@@ -157,7 +157,7 @@ const ManageOffices = () => {
               </button >
             </div>
           </div>
-        <div className="w-100 ext-center">
+        <div className="w-100 ">
             <OfficesTable data={offices} col={columns} />
           </div></>) : <p className="text-danger text-center">{errors}. Please refresh the page.</p>}
           

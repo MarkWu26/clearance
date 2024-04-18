@@ -163,7 +163,7 @@ const EditClearance = () => {
             </div>
           </div>
 
-          <div className="w-100 text-center">
+          <div className="w-100">
               <ClearingOfficesTable
                 data={clearingOffices}
                 col={columns}
